@@ -1,0 +1,38 @@
+slurmd[biomedia09]: task/cgroup: plugin not compiled with hwloc support, skipping affinity.
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2014 The MathWorks, Inc.
+                    R2014a (8.3.0.532) 64-bit (glnxa64)
+                             February 11, 2014
+
+    ----------------------------------------------------
+	Your MATLAB license will expire in 13 days.
+	Please contact your system administrator or
+	MathWorks to renew this license.
+    ----------------------------------------------------
+Failed to find closing '/' (line 15834) while loading toolbox cache.
+Error occurred loading: /homes/oo2113/.matlab/R2014a/toolbox_cache-8.3.0-3736027944-glnxa64.xml
+Cache file ignored.
+ 
+To get started, type one of these: helpwin, helpdesk, or demo.
+For product information, visit www.mathworks.com.
+ 
+Resampling ... done.
+Reading target image ... done
+Reading source image ... done
+Warning: 10.008 percentile collapses in target, skipping
+Warning: 20.006 percentile collapses in target, skipping
+time lm extraction: 0.788768 sec
+Estimated pose values (mean): 17.598 -0.337
+Estimated pose values (cov): 81.220 8.374
+Reading target ... /vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/landmarks/14DL02028_ed0_3D.vtk
+Reading source ... /vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/pems_mriSecond_hier_exp_onlyClas/14DL02028_ed0_3D_lm.vtk
+Error for landmark 1 = 15.0827
+Error for landmark 2 = 12.4497
+Error for landmark 3 = 10.0253
+Error for landmark 4 = 14.0742
+Error for landmark 5 = 10.1561
+Error for landmark 6 = 5.85767
+RMS = 11.2743 mm
+standard deviation is 3.05165 mm
+Writing Results: /vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/distances_mriSecond_hier_exp_onlyClas.txt

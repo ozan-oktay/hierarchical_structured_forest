@@ -1,0 +1,1 @@
+slurmd[roc08]: task/cgroup: plugin not compiled with hwloc support, skipping affinity.

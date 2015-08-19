@@ -1,0 +1,35 @@
+slurmd[biomedia05]: task/cgroup: plugin not compiled with hwloc support, skipping affinity.
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2014 The MathWorks, Inc.
+                    R2014a (8.3.0.532) 64-bit (glnxa64)
+                             February 11, 2014
+
+    ----------------------------------------------------
+	Your MATLAB license will expire in 13 days.
+	Please contact your system administrator or
+	MathWorks to renew this license.
+    ----------------------------------------------------
+ 
+To get started, type one of these: helpwin, helpdesk, or demo.
+For product information, visit www.mathworks.com.
+ 
+Resampling ... done.
+Reading target image ... done
+Reading source image ... done
+Warning: 10.008 percentile collapses in target, skipping
+Warning: 20.006 percentile collapses in target, skipping
+time lm extraction: 0.510320 sec
+Estimated pose values (mean): 11.135 0.551
+Estimated pose values (cov): 125.569 11.274
+Reading target ... /vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/landmarks/14EZ02583_ed0_3D.vtk
+Reading source ... /vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/pems_mriSecond_hier_exp_onlyClas/14EZ02583_ed0_3D_lm.vtk
+Error for landmark 1 = 8.66386
+Error for landmark 2 = 10.4553
+Error for landmark 3 = 4.87981
+Error for landmark 4 = 6.52399
+Error for landmark 5 = 5.38513
+Error for landmark 6 = 8.66386
+RMS = 7.42865 mm
+standard deviation is 1.98758 mm
+Writing Results: /vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/distances_mriSecond_hier_exp_onlyClas.txt

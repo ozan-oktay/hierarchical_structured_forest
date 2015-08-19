@@ -1,0 +1,24 @@
+slurmd[roc05]: task/cgroup: plugin not compiled with hwloc support, skipping affinity.
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2014 The MathWorks, Inc.
+                    R2014a (8.3.0.532) 64-bit (glnxa64)
+                             February 11, 2014
+
+    ----------------------------------------------------
+	Your MATLAB license will expire in 13 days.
+	Please contact your system administrator or
+	MathWorks to renew this license.
+    ----------------------------------------------------
+ 
+To get started, type one of these: helpwin, helpdesk, or demo.
+For product information, visit www.mathworks.com.
+ 
+Resampling ... done.
+Reading target image ... done
+Reading source image ... done
+Warning: 10.008 percentile collapses in target, skipping
+Warning: 20.006 percentile collapses in target, skipping
+time lm extraction: 25.138343 sec
+Estimated pose values (mean): 12.299 0.628
+Estimated pose values (cov): 126.755 11.915

@@ -1,0 +1,8 @@
+biobank dataset 
+===============
+/vol/vipdata/data/biobank/cardiac/nifti/
+
+
+1000 cardiac 3D cine-stack dataset
+===============
+/vol/medic02/users/wbai/data/3d_data_1000
