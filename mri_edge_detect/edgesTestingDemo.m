@@ -5,11 +5,11 @@ function edgesTestingDemo (modelname,imagename,savename)
   restoredefaultpath;setenv('LD_LIBRARY_PATH',''); 
   workdirectory = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
   addpath(genpath(horzcat(workdirectory,'/toolbox')));
-  %compileMex();  
+  compileMex();  
   
   opts=edgesTrain_3D();                    % default options (good settings)
   opts.modelDir   = 'models/';             % model will be in models/forest
-  opts.modelFnm   = 'mriSecond_hiera';     % model name
+  opts.modelFnm   = 'mriSecond_hier_X';    % model name
   if (nargin >= 1), opts.modelFnm  = modelname; end;
   
   model=edgesTrain_3D(opts);           	     % will load model if already trained
@@ -24,10 +24,10 @@ function edgesTestingDemo (modelname,imagename,savename)
   opts.pixel_spacing      = [1.25,1.25,2.00]; % intensity and pem pixel spacing in world coordinates
   opts.imagename          = horzcat(workdirectory,'/mritestingdata/images/14DB02502_ed0_3D.nii.gz');
   opts.patname            = strsplit(opts.imagename,'/'); opts.patname=opts.patname{end};
-  opts.savename           = horzcat(workdirectory,sprintf('/tmp/pem_%s.nii.gz',opts.patname));
-  opts.houghimagesavename = horzcat(workdirectory,sprintf('/tmp/hou_%s.nii.gz',opts.patname));
-  opts.vtksavename        = horzcat(workdirectory,sprintf('/tmp/lm_%s.vtk',opts.patname));
-  opts.posetxtsavename    = horzcat(workdirectory,sprintf('/tmp/pose_%s.txt',opts.patname));
+  opts.savename           = horzcat(workdirectory,sprintf('/tmp/n_pem_%s.nii.gz',opts.patname));
+  opts.houghimagesavename = horzcat(workdirectory,sprintf('/tmp/n_hou_%s.nii.gz',opts.patname));
+  opts.vtksavename        = horzcat(workdirectory,sprintf('/tmp/n_lm_%s.vtk',opts.patname));
+  opts.posetxtsavename    = horzcat(workdirectory,sprintf('/tmp/n_pose_%s.txt',opts.patname));
   opts.tmpimagename       = strcat(tempname('./tmp'),'.nii.gz');
   opts.referenceimagename = horzcat(workdirectory,'/',model.opts.imageDir,'/reference/ref_image.nii.gz');
   if (nargin >= 2), opts.imagename = imagename; end;

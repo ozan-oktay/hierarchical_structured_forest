@@ -119,6 +119,7 @@ void mexFunction( int nl, mxArray *pl[], int nr, const mxArray *pr[] )
   const int hovDims[4] = {h2,w2,d2,nLandmarks};
   const int posDims[2] = {2,nPosePar};
   const int imRadius   = imWidth/2;
+  const int gtRadius   = gtWidth/2;
 
   // construct lookup tables
   uint32 *iids, *eids, *cids, *cids1, *cids2;
@@ -266,9 +267,9 @@ void mexFunction( int nl, mxArray *pl[], int nr, const mxArray *pr[] )
 
                       uint32 k = ind[ r + c*h1 + sl*h1*w1 + t*h1*w1*d1 ];
 
-                      int ri  = r*stride  + imRadius - 1;
-                      int ci  = c*stride  + imRadius - 1;
-                      int si  = sl*stride + imRadius - 1;
+                      int ri  = r*stride  + gtRadius - 1;
+                      int ci  = c*stride  + gtRadius - 1;
+                      int si  = sl*stride + gtRadius - 1;
                       float E1  = *(E + ri + ci*h2 + si*h2*w2);
 
                       for ( int lm=0; lm<nLandmarks; lm++) {

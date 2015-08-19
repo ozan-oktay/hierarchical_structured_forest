@@ -64,6 +64,7 @@ else
   
   if (nargout >= 3)
     [E,inds,HV,pVal] = houghVotes_3D_Mex(model,I,chnsReg,chnsSim,chnsShp);
+    r=opts.gtWidth/2; 
     HV=HV(1+r:siz(1)+r,1+r:siz(2)+r,1+r:siz(3)+r,:); 
     HV=HV/opts.nTreesEval;
     HV=convTri3D(HV,2);

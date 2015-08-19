@@ -37,7 +37,7 @@ opts.nTreesEval= 16;                    % [10]  number of trees to evaluate per 
       opts.seed= 1;                     % [1]   seed for random stream (for reproducibility)
  opts.useParfor= 1;                     % [0]   if true train trees in parallel (memory intensive)
   opts.modelDir= 'models/';             % ['models/'] target directory for storing models
-  opts.modelFnm= 'mriSecond_hier_X';    % ['ctmodel'] model filename
+  opts.modelFnm= 'mriSecond_hier_C';    % ['ctmodel'] model filename
   opts.imageDir= 'mritrainingdata_sec/';% ['ct_training_data/'] location of image dataset     
   opts.ctmaxval= 1024;                  % [1024] maximum allowed intensity value - for linear scaling. 
   

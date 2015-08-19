@@ -1,8 +1,8 @@
 function analyze_model()
-close all;
+%close all;
 colors=['-*b';'-*g';'-*r';'-*k';'-*c'];
 fprintf('Loading the model... \n');
-modelName='/vol/biomedic/users/oo2113/str_hier_forest_mri/models/forest/mriSecond_hier_X.mat';
+modelName='/vol/biomedic/users/oo2113/str_hier_forest_mri/models/forest/mriSecond_hier_A.mat';
 load(modelName);
 fprintf('Model is loaded.\n');
 
