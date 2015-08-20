@@ -131,8 +131,9 @@ while( k < K )
   dids1=dids{k}; dids{k}=[]; hs1=hs(dids1); offsets1=offsets(dids1,:);
   posepars1=posepars(dids1,:); n1=length(hs1); count(k)=n1;
   if(discr), [hs1,hsn{k}]=feval(discretize,hs1,H); hs1=uint32(hs1); end
-  if(discr), assert(all(hs1>0 & hs1<=H)); end; pure=all(hs1(1)==hs1);
-  if(~discr), if(pure), distr(k,hs1(1))=1; hsn{k}=hs1(1); else
+  if(discr), assert(all(hs1>0 & hs1<=H)); end; 
+  classPure=all(hs1(1)==hs1); regPure=isrow(unique(offsets1,'rows'));
+  if(~discr), if(classPure), distr(k,hs1(1))=1; hsn{k}=hs1(1); else
       distr(k,:)=histc(hs1,1:H)/n1; [~,hsn{k}]=max(distr(k,:)); end; end
     
   % Non-parametric Parzen estimate of landmark offsets
@@ -140,7 +141,7 @@ while( k < K )
   if(regr), [meanOff(k,:),covOff(k,:)]   = parzenOffset(offsets1); end;
   
   % if pure node or insufficient data don't train split
-  if( pure || n1<=minCount || depth(k)>maxDepth ), k=k+1; continue; end
+  if( (classPure&&regPure) || n1<=minCount || depth(k)>maxDepth ), k=k+1; continue; end
   
   % train split and continue
   fids1=wswor(fWts,F1,4); data1=data(dids1,fids1);
@@ -154,10 +155,12 @@ while( k < K )
   
   % Perform the node split - search for fid and thr
   if(~hierFlag(k))
-    if (rand(1) >= nodeSelectProb)
+    if ( ( (rand(1) >= nodeSelectProb) || regPure) && ~classPure )
       [fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);sType='classf';
-    elseif (regr)
+      count0=nnz(data(dids1,fids1(fid))<thr);if(gain<gainThr||count0<minChild||(n1-count0)<minChild),[fid,thr,gain]=regForestFindThr(data1,offsets1,dWts(dids1),order1,regSplit);sType='regr';end;
+    elseif (regr && ~regPure)
       [fid,thr,gain]=regForestFindThr(data1,offsets1,dWts(dids1),order1,regSplit);sType='regr';
+      count0=nnz(data(dids1,fids1(fid))<thr);if(gain<gainThr||count0<minChild||(n1-count0)<minChild),[fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);sType='classf';end;
     else
       error('HoughForestTraining::Node Split Criteria Selection Failed');
     end
@@ -199,17 +202,3 @@ meanOff = mean(offsets,1);
 covOff  = cov(offsets);
 covOff  = covOff(:);
 end
-
-%{
-function [meanOff,covOff] = parzenOffset2(offsets)
-meanOff = mean(offsets,1);
-ndim    = size(offsets,2);
-offsets(all(offsets==0,2),:)=[];
-if (size(offsets,1)>=4)
-  covOff  = cov(offsets);
-  covOff  = covOff(:);
-else
-  covOff  = zeros(ndim*ndim,1);
-end
-end
-%}
