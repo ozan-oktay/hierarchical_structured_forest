@@ -69,8 +69,8 @@ function edgesTestingDemo (modelname,imagename,savename)
   
   % save the pose values 
   fprintf (sprintf('Estimated pose values (mean): %3.3f %3.3f\n',pVal(1),pVal(3)));
-  fprintf (sprintf('Estimated pose values (cov): %3.3f %3.3f\n' ,pVal(2),pVal(4)));
-  fileID = fopen(opts.posetxtsavename,'w');fprintf(fileID,'mean val: %3.3f %3.3f\n',pVal(1),pVal(3));fprintf(fileID,'cov val: %3.3f %3.3f\n',pVal(2),pVal(4));fclose(fileID);
+  fprintf (sprintf('Estimated pose values (std): %3.3f %3.3f\n' ,sqrt(pVal(2)),sqrt(pVal(4))));
+  fileID = fopen(opts.posetxtsavename,'w');fprintf(fileID,'mean val: %3.3f %3.3f\n',pVal(1),pVal(3));fprintf(fileID,'std val: %3.3f %3.3f\n',sqrt(pVal(2)),sqrt(pVal(4)));fclose(fileID);
     
 end
 
