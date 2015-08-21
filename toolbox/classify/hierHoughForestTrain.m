@@ -198,6 +198,7 @@ ids=ids(1:N)';
 end
 
 function [meanOff,covOff] = parzenOffset(offsets)
+offsets(all(offsets==0,2),:)=[];
 meanOff = mean(offsets,1);
 covOff  = cov(offsets);
 covOff  = covOff(:);
