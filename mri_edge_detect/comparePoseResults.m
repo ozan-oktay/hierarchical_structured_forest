@@ -2,7 +2,7 @@ function comparePoseResults()
 %COMPARERESULTS Summary of this function goes here
 %   Detailed explanation goes here
 
-firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/poseEstimations_mriSecond_hier_Z.txt';
+firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/poseEstimations_mriSecond_hier_E4.txt';
 workdirectory   = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
 addpath(genpath(horzcat(workdirectory,'/toolbox')));
   

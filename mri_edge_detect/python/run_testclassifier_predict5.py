@@ -32,8 +32,9 @@ outputimages=[]
 
 for file in os.listdir(input_dir):
     if file.endswith('.nii.gz') and ('ed' in file):
+        parsedfile = file.split('.nii.gz')
         inputimages.append(input_dir+'/'+file)
-        outputimages.append(output_dir+'/'+file)
+        outputimages.append(output_dir+'/'+parsedfile[0]+'_pem.nii.gz')
 
 for ind in range(len(inputimages)):
 
@@ -44,5 +45,5 @@ for ind in range(len(inputimages)):
 
   if not (os.path.exists(outputimages[ind])):
       # run it on computer labs
-      cmd_pem   = '/usr/lib/matlab/R2014a/bin/matlab -nodesktop -nosplash -r \\"cd(\'\\\'\'{0}\'\\\'\'); edgesTestingDemo(\'\\\'\'{1}\'\\\'\',\'\\\'\'{2}\'\\\'\',\'\\\'\'{3}\'\\\'\'); quit;\\"'.format(source_dir,modelname,inputimages[ind],outputimages[ind])
+      cmd_pem   = '/usr/lib/matlab/R2014a/bin/matlab -nodesktop -nosplash -r \\"cd(\'\\\'\'{0}\'\\\'\'); edgesTestingDemo(\'\\\'\'{1}\'\\\'\',\'\\\'\'{2}\'\\\'\',\'\\\'\'{3}\'\\\'\'); quit;\\"'.format(source_dir,modelname,inputimages[ind],output_dir)
       os.system('pmk.py --start --command "{0}"'.format(cmd_pem))

@@ -1,0 +1,6 @@
+#!/usr/bin/python
+
+"""
+Extract landmarks from Ozan's Hough vote map.
+"""
+

@@ -1,0 +1,25 @@
+No. of resolution levels   = 3
+Interpolation mode         = Linear
+Transformation mode        = BSplineFFD
+Control point spacing [mm] = 20 20 32
+Temporal spacing [frame]   = 1
+Lambda1                    = 1E-1
+Lambda2                    = 0
+Optimization method        = ConjugateGradient
+Maximum no. of iterations  = 40
+Maximum no. of steps       = 5
+Maximum no. of rejections  = 2
+
+Resolution level           = 0
+Blurring [mm]              = 0
+Resolution [mm]            = 0 0 0
+
+Resolution level           = 1
+Blurring [mm]              = 1.25
+Resolution [mm]            = 2.5 2.5 4
+Subdivision                = 1 1 1 0
+
+Resolution level           = 2
+Blurring [mm]              = 2.5
+Resolution [mm]            = 5 5 8
+Subdivision                = 1 1 1 0

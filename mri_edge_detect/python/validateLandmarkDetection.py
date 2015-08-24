@@ -37,11 +37,11 @@ def evalPose(groundtruthPoseFile,generatedPoseFile,poseErrorTxt):
 # Base Parameter List - Landmark Locations
 slurm_ncores   = 8
 slurm_nthreads = 1
-slurm_memory   = 20
+slurm_memory   = 25
 slurm_queue    = 'short'
 source_dir     = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect'
 testdata_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata'
-modelname      = 'mriSecond_hier_Z'
+modelname      = 'mriSecond_hier_E4'
 
 input_img_dir  = testdata_dir + '/images'
 ground_lm_dir  = testdata_dir + '/landmarks'
@@ -60,7 +60,7 @@ for file in os.listdir(input_img_dir):
     if file.endswith('.nii.gz') and ('ed' in file):
         parsedfile = file.split('.nii.gz')
         inputimages.append(input_img_dir+'/'+file)
-        outputimages.append(output_dir+'/'+file)
+        outputimages.append(output_dir+'/'+parsedfile[0]+'_pem.nii.gz')
         groundtruthLandmarks.append(ground_lm_dir+'/'+parsedfile[0]+'.vtk')
         generatedLandmarks.append(output_dir+'/'+parsedfile[0]+'_lm.vtk')
         groundtruthPoseFiles.append(ground_dof_dir+'/'+parsedfile[0]+'.dof.gz')
@@ -91,7 +91,7 @@ for ind in range(numSubjects):
   else:
 
       # matlab multi-atlas script command
-      cmd_pem   = '/usr/lib/matlab/R2014a/bin/matlab -nodesktop -nosplash -r \\"cd(\'{0}\'); addpath(\'{0}\'); edgesTestingDemo(\'{1}\',\'{2}\',\'{3}\'); quit;\\"'.format(source_dir,modelname,inputimages[ind],outputimages[ind])
+      cmd_pem   = '/usr/lib/matlab/R2014a/bin/matlab -nodesktop -nosplash -r \\"cd(\'{0}\'); addpath(\'{0}\'); edgesTestingDemo(\'{1}\',\'{2}\',\'{3}\'); quit;\\"'.format(source_dir,modelname,inputimages[ind],output_dir)
       cmd_eval  = '/vol/medic02/users/oo2113/Build/irtk_master/bin/pevaluation {0} {1} -output {2}'.format( groundtruthLandmarks[ind], generatedLandmarks[ind], distanceTxtFile )
       cmd_slurm = cmd_pem + '; ' + cmd_eval
       # Run the proposed method (PEM) on SLURM (Multi-atlas segmentation)
