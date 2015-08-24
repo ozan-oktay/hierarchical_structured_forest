@@ -24,7 +24,7 @@ class pipeline(object):
     def reg(self, i, prev_method, cur_method, fr, mask): 
         if re.match('p\w*', cur_method):
             # Point-based registration
-            target = '{0}/landmarks_auto.vtk'.format(self.data_dir)
+            target = '{0}/pems2/cine_sax_ED_lm.vtk'.format(self.data_dir)
             atlas = '{0}/Atlas{1:02d}/landmarks.vtk'.format(self.atlas_dir, i)
         elif re.match('\w*_label', cur_method):
             # Label-based registration
@@ -115,6 +115,9 @@ class pipeline(object):
 
         # Check landmarks
 
+        # Create list of atlases
+        atlasIds = range(1, self.n_atlas+1); del atlasIds[self.targetId]; self.n_atlas -= 1
+
         # Pool for parallel processing
         pool = multiprocessing.Pool(self.n_proc)
 
@@ -122,12 +125,12 @@ class pipeline(object):
         # This step may be replaced by image-based registration using the original orientation information
         #
         # Landmark registration
-        results = [pool.apply_async(call_it, (self, 'reg', (i,'','prreg','ED',''))) for i in range(1, self.n_atlas+1)]
+        results = [pool.apply_async(call_it, (self, 'reg', (i,'','prreg','ED',''))) for i in atlasIds]
         for r in results:
             r.get()
         
         # Image transformation based on landmark registration
-        results = [pool.apply_async(call_it, (self, 'transform', (i,'prreg','ED',''))) for i in range(1, self.n_atlas+1)]
+        results = [pool.apply_async(call_it, (self, 'transform', (i,'prreg','ED',''))) for i in atlasIds]
         for r in results:
             r.get()
         
@@ -135,7 +138,7 @@ class pipeline(object):
         # Transformed atlas images and label maps
         image_props = ''
         label_props = ''
-        for i in range(1, self.n_atlas+1):
+        for i in atlasIds:
             image_prop = '{0}/image_from_Atlas{1:02d}_prreg_ED_auto.nii.gz'.format(self.warped_dir, i)
             image_props += image_prop + ' '
             label_prop = '{0}/label_from_Atlas{1:02d}_prreg_ED_auto.nii.gz'.format(self.warped_dir, i)
@@ -166,17 +169,17 @@ class pipeline(object):
         # Segmentation at ED and ES
         for fr in ['ED', 'ES']:
             # Affine registration
-            results = [pool.apply_async(call_it, (self, 'reg', (i,'prreg','areg',fr,''))) for i in range(1, self.n_atlas+1)]
+            results = [pool.apply_async(call_it, (self, 'reg', (i,'prreg','areg',fr,''))) for i in atlasIds]
             for r in results:
                 r.get()
             
             # Non-rigid registration
-            results = [pool.apply_async(call_it, (self, 'reg', (i,'areg','nreg',fr,'mask'))) for i in range(1, self.n_atlas+1)]
+            results = [pool.apply_async(call_it, (self, 'reg', (i,'areg','nreg',fr,'mask'))) for i in atlasIds]
             for r in results:
                r.get()
             
             # Image transformation
-            results = [pool.apply_async(call_it, (self, 'transform', (i,'nreg',fr,'crop'))) for i in range(1, self.n_atlas+1)]
+            results = [pool.apply_async(call_it, (self, 'transform', (i,'nreg',fr,'crop'))) for i in atlasIds]
             for r in results:
                r.get()
             
@@ -185,7 +188,7 @@ class pipeline(object):
             # Transformed atlas images and label maps
             image_props = ''
             label_props = ''
-            for i in range(1, self.n_atlas+1):
+            for i in atlasIds:
                 image_prop = '{0}/image_from_Atlas{1:02d}_nreg_{2}_auto.nii.gz'.format(self.warped_dir, i, fr)
                 image_props += image_prop + ' '
                 label_prop = '{0}/label_from_Atlas{1:02d}_nreg_{2}_auto.nii.gz'.format(self.warped_dir, i, fr)
@@ -199,24 +202,24 @@ class pipeline(object):
             
             # Refine registration using label maps
             # Affine registration
-            results = [pool.apply_async(call_it, (self, 'reg', (i,'prreg','areg_label',fr,''))) for i in range(1, self.n_atlas+1)]
+            results = [pool.apply_async(call_it, (self, 'reg', (i,'prreg','areg_label',fr,''))) for i in atlasIds]
             for r in results:
                 r.get()
             
             # Non-rigid registration
-            results = [pool.apply_async(call_it, (self, 'reg', (i,'areg_label','nreg_label',fr,''))) for i in range(1, self.n_atlas+1)]
+            results = [pool.apply_async(call_it, (self, 'reg', (i,'areg_label','nreg_label',fr,''))) for i in atlasIds]
             for r in results:
                 r.get()
             
             # Image transformation
-            results = [pool.apply_async(call_it, (self, 'transform', (i,'nreg_label',fr,'crop'))) for i in range(1, self.n_atlas+1)]
+            results = [pool.apply_async(call_it, (self, 'transform', (i,'nreg_label',fr,'crop'))) for i in atlasIds]
             for r in results:
                 r.get()
             
             # Transformed atlas images and label maps
             image_props = ''
             label_props = ''
-            for i in range(1, self.n_atlas+1):
+            for i in atlasIds:
                 image_prop = '{0}/image_from_Atlas{1:02d}_nreg_label_{2}_auto.nii.gz'.format(self.warped_dir, i, fr)
                 image_props += image_prop + ' '
                 label_prop = '{0}/label_from_Atlas{1:02d}_nreg_label_{2}_auto.nii.gz'.format(self.warped_dir, i, fr)
@@ -229,7 +232,7 @@ class pipeline(object):
             os.system('label_fusion {0} {1} {2} {3} {4} -method PBCC -par {5}'.format(target_image, self.n_atlas, image_props, label_props, fusion, par))
 
             # Fit to the template
-            target = '{0}/landmarks_auto.vtk'.format(self.data_dir)
+            target = '{0}/pems2/cine_sax_ED_lm.vtk'.format(self.data_dir)
             template = '{0}/landmarks_in_ref3_nreg.vtk'.format(self.template_dir)
             prreg_dof = '{0}/prreg_to_template_auto.dof.gz'.format(self.dof_dir)
             os.system('{0}/prreg {1} {2} -dofout {3}'.format(self.irtk_dir, target, template, prreg_dof))

@@ -18,7 +18,7 @@ data_root = '/vol/biomedic/users/oo2113/str_hier_forest_mri/segmentation/targets
 os.chdir(data_root)
 list = sorted(os.listdir(data_root))
 
-for data in list:
+for loopId,data in enumerate(list):
     print data
 
     # The atlas directory
@@ -27,6 +27,7 @@ for data in list:
     pipeline.data_dir = os.path.join(data_root, data)
     pipeline.atlas_dir = '/vol/biomedic/users/oo2113/str_hier_forest_mri/segmentation/atlases'
     pipeline.template_dir = '/vol/medic02/users/wbai/data/3d_atlas/v4/nreg_intensity_iter/ref3'
+    pipeline.targetId = (loopId+1) # leave-one out cross validation
     pipeline.n_atlas = 20
     pipeline.n_proc = 20
 

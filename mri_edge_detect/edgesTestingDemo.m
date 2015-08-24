@@ -5,7 +5,7 @@ function edgesTestingDemo (modelname,imagename,savedir)
   restoredefaultpath;setenv('LD_LIBRARY_PATH',''); 
   workdirectory = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
   addpath(genpath(horzcat(workdirectory,'/toolbox')));
-  compileMex();  
+  %compileMex();  
   
   opts=edgesTrain_3D();                    % default options (good settings)
   opts.modelDir   = 'models/';             % model will be in models/forest
@@ -23,12 +23,12 @@ function edgesTestingDemo (modelname,imagename,savedir)
   opts.pixel_type         = 'uint16';         % output image pixel type
   opts.pixel_spacing      = [1.25,1.25,2.00]; % intensity and pem pixel spacing in world coordinates
   opts.referenceimagename = horzcat(workdirectory,'/',model.opts.imageDir,'reference/ref_image.nii.gz');
-  opts.imagename          = horzcat(workdirectory,'/mritestingdata/images/14DB02502_ed0_3D.nii.gz');
-  opts.savedir            = horzcat(workdirectory,'/tmp');  
-  [~,opts.patname,~]      = fileparts(opts.imagename); t=strsplit(opts.patname,'.nii'); opts.patname=t{1};
+  opts.imagename          = horzcat(workdirectory,'/segmentation/targets/Atlas15/cine_sax_ED.nii.gz');
+  opts.savedir            = horzcat(workdirectory,'/segmentation/targets/Atlas15/pems2');  
 
   if (nargin >= 2), opts.imagename = imagename; end;
   if (nargin >= 3), opts.savedir   = savedir;   end;
+  [~,opts.patname,~]      =fileparts(opts.imagename); t=strsplit(opts.patname,'.nii'); opts.patname=t{1};
   opts.pemsavename        =strcat(opts.savedir,'/',opts.patname,'_pem.nii.gz'); 
   opts.houghimagesavename =strcat(opts.savedir,'/',opts.patname,'_lm.nii.gz'); 
   opts.vtksavename        =strcat(opts.savedir,'/',opts.patname,'_lm.vtk');
@@ -37,10 +37,10 @@ function edgesTestingDemo (modelname,imagename,savedir)
   
   %% if the classifier is in the second stage find the pem image %%%%
   if (model.opts.stageId == 1)
-    tmp1              = strsplit(opts.imagename,'/');    
-    opts.pemimagename = strcat(strjoin(tmp1(1:end-2),'/'),'/pems/',opts.patname,'_pem.nii.gz');
-    opts.vtkname      = strcat(strjoin(tmp1(1:end-2),'/'),'/pems/',opts.patname,'_lm.vtk');
-    otherFtrs.pem     = load_untouch_nii(opts.pemimagename); assert(all(otherFtrs.pem.hdr.dime.pixdim(2:4)==[1.25,1.25,2.00])); otherFtrs.pem = otherFtrs.pem.img; 
+    tmp1              = strsplit(opts.savedir,'/');    
+    opts.pemimagename = strcat(strjoin(tmp1(1:end-1),'/'),'/pems/',opts.patname,'_pem.nii.gz');
+    opts.vtkname      = strcat(strjoin(tmp1(1:end-1),'/'),'/pems/',opts.patname,'_lm.vtk');
+    otherFtrs.pem     = load_untouch_nii(opts.pemimagename); assert(all((otherFtrs.pem.hdr.dime.pixdim(2:4)-[1.25,1.25,2.00])<1e-4)); otherFtrs.pem = otherFtrs.pem.img; 
     otherFtrs.w2i     = world2ImageMat  (opts.pemimagename);
     otherFtrs.vtk     = vtk2Mat         (opts.vtkname);
   end 
