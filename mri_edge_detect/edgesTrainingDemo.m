@@ -9,14 +9,14 @@ compileMex();
 %%%% set opts for training (see edgesTrain_3D.m) %%%%
    opts.imWidth= 28;                    % [28]  width of image patches    
    opts.gtWidth= 12;                    % [12]  width of ground truth patches     
-      opts.nPos= 2.0e6;                 % [1e6] number of positive patches per tree
-      opts.nNeg= 2.0e6;                 % [1e6] number of negative patches per tree
+      opts.nPos= 6e5;                   % [1e6] number of positive patches per tree
+      opts.nNeg= 6e5;                   % [1e6] number of negative patches per tree
      opts.nImgs= inf;                   % [75]  maximum number of images to use for training
     opts.nTrees= 16;                    % [16]  number of trees in forest to train
   opts.fracFtrs= 0.125;                 % [1/8] fraction of features to use to train each tree      
   opts.minCount= 1;                     % [1]   minimum number of data points to allow split
   opts.minChild= 8;                     % [8]   minimum number of data points allowed at child nodes
-  opts.maxDepth= 64;                    % [64]  maximum depth of tree
+  opts.maxDepth= 64;                    % [64]  maximum depth of tree (default value 64)
 opts.discretize= 'kmeans';              % ['kmeans'] options include 'pca' and 'kmeans'
   opts.nSamples= 600;                   % [600] number of samples for clustering structured labels 
   opts.nClasses= 2;                     % [2]   number of classes (clusters) for binary splits
@@ -37,7 +37,7 @@ opts.nTreesEval= 16;                    % [10]  number of trees to evaluate per 
       opts.seed= 1;                     % [1]   seed for random stream (for reproducibility)
  opts.useParfor= 1;                     % [0]   if true train trees in parallel (memory intensive)
   opts.modelDir= 'models/';             % ['models/'] target directory for storing models
-  opts.modelFnm= 'mriSecond_hier_E4';   % ['ctmodel'] model filename
+  opts.modelFnm= 'mriSecond_hier_A1';   % ['ctmodel'] model filename
   opts.imageDir= 'mritrainingdata_sec/';% ['ct_training_data/'] location of image dataset     
   opts.ctmaxval= 1024;                  % [1024] maximum allowed intensity value - for linear scaling. 
   
@@ -53,6 +53,6 @@ opts.nodeSelectProb= 0.50;              % probability of selecting a regression 
   
 %%%% train edge detector (~150m/20Gb per tree, proportional to nPos/nNeg) %%%%
 if (matlabpool('size')), matlabpool close; end; 
-if (opts.useParfor), matlabpool(1); end;
+if (opts.useParfor), matlabpool(8); end;
 tic, edgesTrain_3D(opts); toc; % will load model if already trained
 if (matlabpool('size')), matlabpool close; end;

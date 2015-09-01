@@ -41,7 +41,7 @@ slurm_memory   = 25
 slurm_queue    = 'short'
 source_dir     = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect'
 testdata_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata'
-modelname      = 'mriSecond_hier_E4'
+modelname      = 'mriSecond_hier_A1'
 
 input_img_dir  = testdata_dir + '/images'
 ground_lm_dir  = testdata_dir + '/landmarks'
@@ -86,7 +86,7 @@ for ind in range(numSubjects):
 
     cmd_eval  = '/vol/medic02/users/oo2113/Build/irtk_master/bin/pevaluation {0} {1} -output {2}'.format( groundtruthLandmarks[ind], generatedLandmarks[ind], distanceTxtFile )
     os.system(cmd_eval)
-    if os.path.exists(generatedPoseFiles[ind]): evalPose(groundtruthPoseFiles[ind],generatedPoseFiles[ind],poseErrorTxtFile)
+    #if os.path.exists(generatedPoseFiles[ind]): evalPose(groundtruthPoseFiles[ind],generatedPoseFiles[ind],poseErrorTxtFile)
 
   else:
 

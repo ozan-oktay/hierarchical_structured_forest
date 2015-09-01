@@ -255,6 +255,29 @@ void mexFunction( int nl, mxArray *pl[], int nr, const mxArray *pr[] )
     for ( int p=0; p<nPosePar*2; p++) P[p] /= (float)(nTreesEval*d1*w1*h1);
   }
 
+  // compute the mean confidence value
+  uint32 vCount=0; float *covMean; covMean = new float [nLandmarks]; for (int lm=0; lm<nLandmarks; lm++) covMean[lm]=0.0f;
+  if (nLandmarks > 0){
+      for( int t=0; t<nTreesEval; t++ ) {
+          for ( int sl=0; sl<d1; sl++ ) {
+              for( int c=0; c<w1; c++ ) {
+                  for( int r=0; r<h1; r++ ) {
+                      uint32 k = ind[ r + c*h1 + sl*h1*w1 + t*h1*w1*d1 ];
+                      for ( int lm=0; lm<nLandmarks; lm++) {
+                        float covR = covOff[ (lm*3)  *hCov + (lm*3)   + k*hCov*hCov ];
+                        float covC = covOff[ (lm*3+1)*hCov + (lm*3+1) + k*hCov*hCov ];
+                        float covS = covOff[ (lm*3+2)*hCov + (lm*3+2) + k*hCov*hCov ];
+                        float covTr = (covR + covC + covS);
+                        covMean[lm] += covTr; if(covTr>1e-15) vCount++;
+                      }
+                  }
+              }
+          }
+      }
+      for (int lm=0; lm<nLandmarks; lm++) covMean[lm] /= ( (float)vCount / (float)nLandmarks );
+      for (int lm=0; lm<nLandmarks; lm++) mexPrintf("covMean %d: %f\n",lm,covMean[lm]);
+  }
+
   // compute Hough Votes for the landmarks
   if (nLandmarks > 0){
       #ifdef USEOMP
@@ -282,6 +305,7 @@ void mexFunction( int nl, mxArray *pl[], int nr, const mxArray *pr[] )
                         float covC = covOff[ (lm*3+1)*hCov + (lm*3+1) + k*hCov*hCov ];
                         float covS = covOff[ (lm*3+2)*hCov + (lm*3+2) + k*hCov*hCov ];
                         float covTr = (covR + covC + covS);
+                        if (covTr >= covMean[lm]/4.0f) continue;
 
                         float rn = (float)ri + ro; float rn_p = rn - (float)floor(rn); int rn_f = int(floor(rn)); int rn_c = int(ceil(rn));
                         float cn = (float)ci + co; float cn_p = cn - (float)floor(cn); int cn_f = int(floor(cn)); int cn_c = int(ceil(cn));
@@ -309,4 +333,5 @@ void mexFunction( int nl, mxArray *pl[], int nr, const mxArray *pr[] )
   // free memory
   delete [] iids; delete [] eids;
   delete [] cids; delete [] cids1; delete [] cids2;
+  delete [] covMean;
 }
