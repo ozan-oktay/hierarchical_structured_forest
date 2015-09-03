@@ -69,9 +69,9 @@ function forest = hierHoughForestTrain( data, hs, offsets, posepars, varargin )
 
 % get additional parameters and fill in remaining parameters
 dfs={ 'M',1, 'H',[], 'L',[], 'N1',[], 'F1',[], 'split','gini', 'minCount',1, ...
-  'minChild',1, 'maxDepth',64, 'dWts',[], 'fWts',[], 'discretize','', ...
-  'regSplit','mse', 'nodeSelectProb',0.5 };
-[M,H,L,N1,F1,splitStr,minCount,minChild,maxDepth,dWts,fWts,discretize,regSplitStr,nodeSelectProb] = getPrmDflt(varargin,dfs,1);
+  'minChild',1, 'maxDepth',64, 'dWts',[], 'fWts',[], 'rWts',[], 'discretize','', ...
+  'regSplit','mse', 'nodeSelectProb',0.5};
+[M,H,L,N1,F1,splitStr,minCount,minChild,maxDepth,dWts,fWts,rWts,discretize,regSplitStr,nodeSelectProb] = getPrmDflt(varargin,dfs,1);
 
 discr=~isempty(discretize); regr=~isempty(offsets); hier=~isempty(posepars);
 [N,F]=size(data); assert(length(hs)==N); P=size(posepars,2);
@@ -79,12 +79,13 @@ minChild=max(1,minChild); minCount=max([1 minCount minChild]);
 if(~regr), nodeSelectProb=0.0; end;
 if(regr), assert(length(offsets)==N);end
 if(hier), assert(length(posepars)==N);end
-if(isempty(L)), L=size(offsets,2)/3; end;
+if(isempty(L)), L=size(offsets,2); end;
 if(isempty(H)), H=max(hs); end; assert(discr || all(hs>0 & hs<=H));
 if(isempty(N1)), N1=round(5*N/M); end; N1=min(N,N1);
 if(isempty(F1)), F1=round(sqrt(F)); end; F1=min(F,F1);
 if(isempty(dWts)), dWts=ones(1,N,'single'); end; dWts=dWts/sum(dWts);
 if(isempty(fWts)), fWts=ones(1,F,'single'); end; fWts=fWts/sum(fWts);
+if(isempty(rWts)), rWts=ones(1,L,'single'); end; rWts=rWts/sum(rWts);
 split=find(strcmpi(splitStr,{'gini','entropy','twoing'}))-1;
 regSplit=find(strcmpi(regSplitStr,{'mse','covariance'}))-1;
 
@@ -97,11 +98,12 @@ if(~isa(data,'single')),           data=single(data);     end
 if(~isa(hs,'uint32') && ~discr),     hs=uint32(hs);       end
 if(~isa(offsets,'single')),     offsets=single(offsets);  end
 if(~isa(fWts,'single')),           fWts=single(fWts);     end
+if(~isa(rWts,'single')),           rWts=single(rWts);     end
 if(~isa(posepars,'single')),   posepars=single(posepars); end
 if(~isa(dWts,'single')),           dWts=single(dWts);     end
 
 % train M random trees on different subsets of data
-prmTree = {H,F1,L,P,minCount,minChild,maxDepth,fWts,split,discretize,regr,regSplit,nodeSelectProb,hier};
+prmTree = {H,F1,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier};
 for i=1:M
   if(N==N1), data1=data; hs1=hs; offsets1=offsets; posepars1=posepars; dWts1=dWts; else
     d=wswor(dWts,N1,4); data1=data(d,:); hs1=hs(d); offsets1=offsets(d,:); posepars1=posepars(d,:);
@@ -116,11 +118,11 @@ end
 function tree = treeTrain( data, hs, offsets, posepars, dWts, prmTree )
 
 % Train single random tree.
-[H,F1,L,P,minCount,minChild,maxDepth,fWts,split,discretize,regr,regSplit,nodeSelectProb,hier]=deal(prmTree{:});
+[H,F1,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier]=deal(prmTree{:});
 N=size(data,1); K=2*N-1; discr=~isempty(discretize);
 thrs     =zeros(K,1,'single');      distr=zeros(K,H,'single');
 fids     =zeros(K,1,'uint32');      gains=zeros(K,1,'single');
-meanOff  =zeros(K,3*L,'single');   covOff=zeros(K,3*3*L*L,'single');
+meanOff  =zeros(K,L,'single');     covOff=zeros(K,L*L,'single');
 meanPose =zeros(K,P,'single');    covPose=zeros(K,P*P,'single');
 splitType=zeros(K,1,'uint8');    hierFlag=false(K,1); if(hier),hierFlag(1)=true;end;
 child=fids; count=fids; depth=fids; gainThr=1e-10;
@@ -132,18 +134,17 @@ while( k < K )
   posepars1=posepars(dids1,:); n1=length(hs1); count(k)=n1;
   if(discr), [hs1,hsn{k}]=feval(discretize,hs1,H); hs1=uint32(hs1); end
   if(discr), assert(all(hs1>0 & hs1<=H)); end; 
+  if(hier), [meanPose(k,:),covPose(k,:)] = parzenOffset(posepars1); end;
+  if(regr), [meanOff(k,:),covOff(k,:)]   = parzenOffset(offsets1); end;
   classPure=all(hs1(1)==hs1); regPure=isrow(unique(offsets1,'rows'));
   if(~discr), if(classPure), distr(k,hs1(1))=1; hsn{k}=hs1(1); else
       distr(k,:)=histc(hs1,1:H)/n1; [~,hsn{k}]=max(distr(k,:)); end; end
-    
-  % Non-parametric Parzen estimate of landmark offsets
-  if(hier), [meanPose(k,:),covPose(k,:)] = parzenOffset(posepars1); end;
-  if(regr), [meanOff(k,:),covOff(k,:)]   = parzenOffset(offsets1); end;
-  
+      
   % if pure node or insufficient data don't train split
   if( (classPure&&regPure) || n1<=minCount || depth(k)>maxDepth ), k=k+1; continue; end
   
   % train split and continue
+  offsets1=offsets1.*repmat(rWts,n1,1);
   fids1=wswor(fWts,F1,4); data1=data(dids1,fids1);
   [~,order1]=sort(data1); order1=uint32(order1-1);
   
@@ -157,10 +158,10 @@ while( k < K )
   if(~hierFlag(k))
     if ( ( (rand(1) >= nodeSelectProb) || regPure) && ~classPure )
       [fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);sType='classf';
-      count0=nnz(data(dids1,fids1(fid))<thr);if(gain<gainThr||count0<minChild||(n1-count0)<minChild),[fid,thr,gain]=regForestFindThr(data1,offsets1,dWts(dids1),order1,regSplit);sType='regr';end;
+      count0=nnz(data(dids1,fids1(fid))<thr);if(~regPure),if(gain<gainThr||count0<minChild||(n1-count0)<minChild),[fid,thr,gain]=regForestFindThr(data1,offsets1,dWts(dids1),order1,regSplit);sType='regr';end;end;
     elseif (regr && ~regPure)
       [fid,thr,gain]=regForestFindThr(data1,offsets1,dWts(dids1),order1,regSplit);sType='regr';
-      count0=nnz(data(dids1,fids1(fid))<thr);if(gain<gainThr||count0<minChild||(n1-count0)<minChild),[fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);sType='classf';end;
+      count0=nnz(data(dids1,fids1(fid))<thr);if(~classPure),if(gain<gainThr||count0<minChild||(n1-count0)<minChild),[fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);sType='classf';end;end;
     else
       error('HoughForestTraining::Node Split Criteria Selection Failed');
     end

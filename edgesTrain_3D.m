@@ -245,12 +245,13 @@ offsets   = zeros(3,numLm,k,'single');
 posepars  = zeros(nPosePar,k,'single'); k = 0;
 poseOrd   = {'rz','rx','ry'};
 tid       = ticStatus('Collecting data',30,1);
+spacing   = cell(nImgs,1);
 
 for i = 1:nImgs
   
   % Load image, segmentation and boundaries
   I   = load_untouch_nii([trnImgDir imgIds{i} '.' ext]); I=I.img; siz=size(I);
-  gt  = load_untouch_nii([trnGtDir  imgIds{i} '.' ext]); gt=gt.img;           
+  gt  = load_untouch_nii([trnGtDir  imgIds{i} '.' ext]); spacing{i}=gt.hdr.dime.pixdim(2:4); gt=gt.img;           
   bou = load_untouch_nii([trnBouDir imgIds{i} '.' ext]); bou=(bou.img)>0;  
   fid = fopen([trnLMDir imgIds{i} '.txt']); lm=textscan(fid,'%f%f%f','HeaderLines',avaLm-numLm,'delimiter','\n'); fclose(fid);
   I   = single(I)/single(opts.ctmaxval);                                      
@@ -342,11 +343,12 @@ for i = 1:nImgs
   tocStatus(tid,i/nImgs);
 end
 if(k<size(ftrs,1)), ftrs=ftrs(1:k,:); labels=labels(:,:,:,1:k); offsets=offsets(:,:,1:k); posepars=posepars(:,1:k); end
+spacing=cell2mat(spacing); assert(isrow(unique(spacing,'rows'))); rWts=repmat(spacing(1,:)',1,numLm); rWts=transpose(rWts(:));
 
 % Train structured edge classifier (random decision tree)
 pTree=struct('minCount',opts.minCount, 'minChild',opts.minChild, ...
   'maxDepth',opts.maxDepth, 'H',opts.nClasses, 'split',opts.split, ...
-  'regSplit',opts.regSplit, 'nodeSelectProb',opts.nodeSelectProb);
+  'regSplit',opts.regSplit, 'nodeSelectProb',opts.nodeSelectProb, 'rWts',rWts);
 
 t=labels;   labels  =cell(k,1);                  for i=1:k, labels{i}=t(:,:,:,i); end; clear t;
 t=offsets;  offsets =zeros(k,numLm*3,'single');  for i=1:k, t2=t(:,:,i); offsets(i,:)=t2(:); end; clear t; clear t2;

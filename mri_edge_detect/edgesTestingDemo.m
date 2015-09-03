@@ -27,7 +27,7 @@ function edgesTestingDemo (modelname,imagename,savedir)
   opts.savedir            = horzcat(workdirectory,'/segmentation/targets/Atlas15/pems2');  
 
   if (nargin >= 2), opts.imagename = imagename; end;
-  if (nargin >= 3), opts.savedir   = savedir;   end;
+  if (nargin >= 3), opts.savedir   = savedir;   end; mkdir(opts.savedir)
   [~,opts.patname,~]      =fileparts(opts.imagename); t=strsplit(opts.patname,'.nii'); opts.patname=t{1};
   opts.pemsavename        =strcat(opts.savedir,'/',opts.patname,'_pem.nii.gz'); 
   opts.houghimagesavename =strcat(opts.savedir,'/',opts.patname,'_lm.nii.gz'); 
