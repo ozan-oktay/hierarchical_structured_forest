@@ -21,7 +21,7 @@ function forest = hierHoughForestTrain( data, hs, offsets, posepars, varargin )
 %   .M          - [1] number of trees to train
 %   .H          - [max(hs)] number of classes
 %   .N1         - [5*N/M] number of data points for training each tree
-%   .F1         - [sqrt(F)] number features to sample for each node split
+%   .FC         - [sqrt(F)] number features to sample for each node split
 %   .split      - ['gini'] options include 'gini', 'entropy' and 'twoing'
 %   .minCount   - [1] minimum number of data points to allow split
 %   .minChild   - [1] minimum number of data points allowed at child nodes
@@ -49,7 +49,7 @@ function forest = hierHoughForestTrain( data, hs, offsets, posepars, varargin )
 % EXAMPLE
 %  N=10000; H=5; d=2; [xs0,hs0,xs1,hs1]=demoGenData(N,N,H,d,1,1);
 %  xs0=single(xs0); xs1=single(xs1);
-%  pTrain={'maxDepth',50,'F1',2,'M',150,'minChild',5};
+%  pTrain={'maxDepth',50,'FC',2,'M',150,'minChild',5};
 %  tic, forest=forestTrain(xs0,hs0,pTrain{:}); toc
 %  hsPr0 = forestApply(xs0,forest);
 %  hsPr1 = forestApply(xs1,forest);
@@ -68,10 +68,10 @@ function forest = hierHoughForestTrain( data, hs, offsets, posepars, varargin )
 % Licensed under the Simplified BSD License [see external/bsd.txt]
 
 % get additional parameters and fill in remaining parameters
-dfs={ 'M',1, 'H',[], 'L',[], 'N1',[], 'F1',[], 'split','gini', 'minCount',1, ...
+dfs={ 'M',1, 'H',[], 'L',[], 'N1',[], 'FC',[], 'FR',[], 'split','gini', 'minCount',1, ...
   'minChild',1, 'maxDepth',64, 'dWts',[], 'fWts',[], 'rWts',[], 'discretize','', ...
   'regSplit','mse', 'nodeSelectProb',0.5};
-[M,H,L,N1,F1,splitStr,minCount,minChild,maxDepth,dWts,fWts,rWts,discretize,regSplitStr,nodeSelectProb] = getPrmDflt(varargin,dfs,1);
+[M,H,L,N1,FC,FR,splitStr,minCount,minChild,maxDepth,dWts,fWts,rWts,discretize,regSplitStr,nodeSelectProb] = getPrmDflt(varargin,dfs,1);
 
 discr=~isempty(discretize); regr=~isempty(offsets); hier=~isempty(posepars);
 [N,F]=size(data); assert(length(hs)==N); P=size(posepars,2);
@@ -82,7 +82,8 @@ if(hier), assert(length(posepars)==N);end
 if(isempty(L)), L=size(offsets,2); end;
 if(isempty(H)), H=max(hs); end; assert(discr || all(hs>0 & hs<=H));
 if(isempty(N1)), N1=round(5*N/M); end; N1=min(N,N1);
-if(isempty(F1)), F1=round(sqrt(F)); end; F1=min(F,F1);
+if(isempty(FC)), FC=round(sqrt(F)); end; FC=min(F,FC);
+if(isempty(FR)), FR=round(F/3); end; FR=min(F,FR);
 if(isempty(dWts)), dWts=ones(1,N,'single'); end; dWts=dWts/sum(dWts);
 if(isempty(fWts)), fWts=ones(1,F,'single'); end; fWts=fWts/sum(fWts);
 if(isempty(rWts)), rWts=ones(1,L,'single'); end; rWts=rWts/sum(rWts);
@@ -103,7 +104,7 @@ if(~isa(posepars,'single')),   posepars=single(posepars); end
 if(~isa(dWts,'single')),           dWts=single(dWts);     end
 
 % train M random trees on different subsets of data
-prmTree = {H,F1,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier};
+prmTree = {H,FC,FR,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier};
 for i=1:M
   if(N==N1), data1=data; hs1=hs; offsets1=offsets; posepars1=posepars; dWts1=dWts; else
     d=wswor(dWts,N1,4); data1=data(d,:); hs1=hs(d); offsets1=offsets(d,:); posepars1=posepars(d,:);
@@ -118,7 +119,7 @@ end
 function tree = treeTrain( data, hs, offsets, posepars, dWts, prmTree )
 
 % Train single random tree.
-[H,F1,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier]=deal(prmTree{:});
+[H,FC,FR,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier]=deal(prmTree{:});
 N=size(data,1); K=2*N-1; discr=~isempty(discretize);
 thrs     =zeros(K,1,'single');      distr=zeros(K,H,'single');
 fids     =zeros(K,1,'uint32');      gains=zeros(K,1,'single');
@@ -145,9 +146,9 @@ while( k < K )
   
   % train split and continue
   offsets1=offsets1.*repmat(rWts,n1,1);
-  fids1=wswor(fWts,F1,4); data1=data(dids1,fids1);
+  fids1=wswor(fWts,FC,4); data1=data(dids1,fids1);
   [~,order1]=sort(data1); order1=uint32(order1-1);
-  
+    
   % Perform the node split - search for fid and thr (first try with hier)
   if (hierFlag(k))
     [fid,thr,gain]=regForestFindThr(data1,posepars1,dWts(dids1),order1,regSplit);
@@ -160,6 +161,8 @@ while( k < K )
       [fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);sType='classf';
       count0=nnz(data(dids1,fids1(fid))<thr);if(~regPure),if(gain<gainThr||count0<minChild||(n1-count0)<minChild),[fid,thr,gain]=regForestFindThr(data1,offsets1,dWts(dids1),order1,regSplit);sType='regr';end;end;
     elseif (regr && ~regPure)
+      fids1=wswor(fWts,FR,4); data1=data(dids1,fids1);
+      [~,order1]=sort(data1); order1=uint32(order1-1);
       [fid,thr,gain]=regForestFindThr(data1,offsets1,dWts(dids1),order1,regSplit);sType='regr';
       count0=nnz(data(dids1,fids1(fid))<thr);if(~classPure),if(gain<gainThr||count0<minChild||(n1-count0)<minChild),[fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);sType='classf';end;end;
     else
