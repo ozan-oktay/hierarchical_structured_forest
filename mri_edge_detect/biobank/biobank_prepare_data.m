@@ -79,23 +79,27 @@ parfor patientId = 1 : numel (atlasfoldernames)
   %%%% Clear & Split the 3D+T into separate frames
   system(horzcat('rm -rf ',targetdir_training_tmp,'/frame*.nii.gz'));
   system(horzcat('splitvolume',' ',volume4dname,' ',targetdir_training_tmp,'/frame',' ','-sequence'));
-  tmp_edimgname    = strcat(targetdir_training_tmp,sprintf('/frame%2.2d.nii.gz',ed_frame));
+  tmp_edimgname   = strcat(targetdir_training_tmp,sprintf('/frame%2.2d.nii.gz',ed_frame));
   
   %%%% Read Voxel spacing and resize inplane to same voxel level (both image and label)
   system(sprintf('resample %s %s -size %g %g %g -linear -nne',tmp_edimgname,tmp_edimgname,voxelSize,voxelSize,z_spacing));
   target_imgnameED = strcat(targetdir_training,'/images',sprintf('/%s_ed%d_3D.nii.gz',patientName,ed_frame));
   system (horzcat(convertbin,' ',tmp_edimgname,' ',target_imgnameED,' ','-',image_type));
 
-  %%%% Save the VTK Landmarks as text file 
-  target_landmarksnameED_txt = strcat(targetdir_training,'/landmarks',sprintf('/%s_ed%d_3D.txt',patientName,ed_frame));
+  %%%% Save the VTK Landmarks as a vtk file 
   target_landmarksnameED_vtk = strcat(targetdir_training,'/landmarks',sprintf('/%s_ed%d_3D.vtk',patientName,ed_frame));
-  system(horzcat('vtk2txt.py',' ','--input',' ',atlasfolderdir,'/landmarks.vtk',' ','--output',' ',target_landmarksnameED_txt,' ','--imagecoord true',' ','--targetimage',' ',target_imgnameED));
+  target_landmarksnameED_txt = strcat(targetdir_training,'/landmarks',sprintf('/%s_ed%d_3D.txt',patientName,ed_frame));
   copyfile(strcat(atlasfolderdir,'/landmarks.vtk'),target_landmarksnameED_vtk);
   
   %%%% Reset the headers - After saving the landmarks in image coordinate space
   system(horzcat('headertool',' ',target_imgnameED,' ',tmp_edimgname,' ','-reset'));
+  system(horzcat('ptransformation',' ',target_landmarksnameED_vtk,' ',target_landmarksnameED_vtk,' -target ',target_imgnameED,' -source ',tmp_edimgname));
   system(horzcat('headertool',' ',tmp_edimgname,' ',target_imgnameED,' ','-orientation',' ','1 0 0 0 -1 0 0 0 -1'));
+  system(horzcat('ptransformation',' ',target_landmarksnameED_vtk,' ',target_landmarksnameED_vtk,' -target ',tmp_edimgname,' -source ',target_imgnameED));
   system(horzcat('transformation',' ',target_imgnameED,' ',target_imgnameED,' ','-target',' ',tmp_edimgname,' ','-linear -matchInputType'));
+
+  %%%% Convert the VTK Landmarks to a text file
+  system(horzcat('vtk2txt.py',' ','--input',' ',target_landmarksnameED_vtk,' ','--output',' ',target_landmarksnameED_txt,' ','--imagecoord true',' ','--targetimage',' ',target_imgnameED));
 
   %%%% Clean the temporary directory
   system(horzcat('rm -rf ',targetdir_training_tmp));
