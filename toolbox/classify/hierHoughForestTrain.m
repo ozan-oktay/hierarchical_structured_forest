@@ -125,9 +125,11 @@ thrs     =zeros(K,1,'single');      distr=zeros(K,H,'single');
 fids     =zeros(K,1,'uint32');      gains=zeros(K,1,'single');
 meanOff  =zeros(K,L,'single');     covOff=zeros(K,L*L,'single');
 meanPose =zeros(K,P,'single');    covPose=zeros(K,P*P,'single');
-splitType=zeros(K,1,'uint8');    hierFlag=false(K,1); if(hier),hierFlag(1)=true;end;
+splitType=zeros(K,1,'uint8');       nType=false(K,3); 
+                                    tType=false(K,3);
 child=fids; count=fids; depth=fids; gainThr=1e-10;
 hsn=cell(K,1); dids=cell(K,1); dids{1}=uint32(1:N); k=1; K=2; 
+if(hier),nType(1,1) =true;end;
 
 while( k < K )
   % get node data and store distribution
@@ -137,45 +139,50 @@ while( k < K )
   if(discr), assert(all(hs1>0 & hs1<=H)); end; 
   if(hier), [meanPose(k,:),covPose(k,:)] = parzenOffset(posepars1); end;
   if(regr), [meanOff(k,:),covOff(k,:)]   = parzenOffset(offsets1); end;
-  classPure=all(hs1(1)==hs1); regPure=isrow(unique(offsets1,'rows'));
+  classPure=all(hs1(1)==hs1); regPure=isrow(unique(offsets1,'rows')) || isempty(offsets1);
   if(~discr), if(classPure), distr(k,hs1(1))=1; hsn{k}=hs1(1); else
       distr(k,:)=histc(hs1,1:H)/n1; [~,hsn{k}]=max(distr(k,:)); end; end
       
-  % if pure node or insufficient data don't train split
-  if( (classPure&&regPure) || n1<=minCount || depth(k)>maxDepth ), k=k+1; continue; end
+  % random selection to choose split type  % (1)hierSplit, (2)classSplit, (3)regSplit
+  nType(k,1) = ~tType(k,1) && nType(k,1);
+  nType(k,2) = ~tType(k,2) && ~classPure && ~nType(k,1);
+  nType(k,3) = ~tType(k,3) && ~regPure   && ~nType(k,1);
   
-  % train split and continue
-  offsets1=offsets1.*repmat(rWts,n1,1);
-  fids1=wswor(fWts,FC,4); data1=data(dids1,fids1);
+  % if both classification and regression nodes are selected, then do a random choice
+  if (nType(k,2)==true && nType(k,3)==true),rD=(rand(1)>=nodeSelectProb); if (rD), nType(k,2)=false; else nType(k,3)=false; end; end
+  
+  % if pure node or insufficient data don't train split
+  if( all(nType(k,:)==false) || (classPure&&regPure) || n1<=minCount || depth(k)>maxDepth ), k=k+1; continue; end
+  assert( numel(nType(k,nType(k,:)))==1 );
+  
+  % split specific parameters
+  if     (nType(k,1)), fWts1=ones(1,numel(fWts),'single')/numel(fWts); F1=FR; 
+  elseif (nType(k,2)), fWts1=fWts;                                     F1=FC; 
+  elseif (nType(k,3)), fWts1=fWts;                                     F1=FR;
+  end;
+    
+  % train split (weak classifier) 
+  fids1=wswor(fWts1,F1,4); data1=data(dids1,fids1); offsets1=offsets1.*repmat(rWts,n1,1);
   [~,order1]=sort(data1); order1=uint32(order1-1);
     
   % Perform the node split - search for fid and thr (first try with hier)
-  if (hierFlag(k))
-    [fid,thr,gain]=regForestFindThr(data1,posepars1,dWts(dids1),order1,regSplit);
-    if(gain>1e1),hierFlag(K:K+1)=true; sType='hier'; else hierFlag(k)=false; end;
-  end
-  
-  % Perform the node split - search for fid and thr
-  if(~hierFlag(k))
-    if ( ( (rand(1) >= nodeSelectProb) || regPure) && ~classPure )
-      [fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);sType='classf';
-      count0=nnz(data(dids1,fids1(fid))<thr);if(~regPure),if(gain<gainThr||count0<minChild||(n1-count0)<minChild),[fid,thr,gain]=regForestFindThr(data1,offsets1,dWts(dids1),order1,regSplit);sType='regr';end;end;
-    elseif (regr && ~regPure)
-      fids1=wswor(fWts,FR,4); data1=data(dids1,fids1);
-      [~,order1]=sort(data1); order1=uint32(order1-1);
-      [fid,thr,gain]=regForestFindThr(data1,offsets1,dWts(dids1),order1,regSplit);sType='regr';
-      count0=nnz(data(dids1,fids1(fid))<thr);if(~classPure),if(gain<gainThr||count0<minChild||(n1-count0)<minChild),[fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);sType='classf';end;end;
-    else
-      error('HoughForestTraining::Node Split Criteria Selection Failed');
-    end
+  if (nType(k,1))
+    [fid,thr,gain]=regForestFindThr(data1,posepars1,dWts(dids1),order1,regSplit); nameType='hier'; tType(k,1)=true;
+    if(gain>1e1),nType(K:K+1,1)=true; else dids{k}=dids1; continue; end;
+  elseif (nType(k,2))
+    [fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);nameType='classf'; tType(k,2)=true;
+    count0=nnz(data(dids1,fids1(fid))<thr); if(gain<gainThr||count0<minChild||(n1-count0)<minChild), dids{k}=dids1; continue; end; 
+  elseif (nType(k,3))
+    [fid,thr,gain]=regForestFindThr(data1,offsets1,dWts(dids1),order1,regSplit);nameType='regr'; tType(k,3)=true;
+    count0=nnz(data(dids1,fids1(fid))<thr); if(gain<gainThr||count0<minChild||(n1-count0)<minChild),  dids{k}=dids1; continue; end; 
   end
   
   fid=fids1(fid); left=data(dids1,fid)<thr; count0=nnz(left);
-  if( gain>gainThr && count0>=minChild && (n1-count0)>=minChild )
+  if( gain>=gainThr && count0>=minChild && (n1-count0)>=minChild )
     child(k)=K; fids(k)=fid-1; thrs(k)=thr;
     gains(k)=gain; %https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/tree/_tree.pyx - line 3581
     dids{K}=dids1(left); dids{K+1}=dids1(~left);
-    splitType(k)=find(strcmpi(sType,{'classf','regr','hier'}));
+    splitType(k)=find(strcmpi(nameType,{'classf','regr','hier'}));
     depth(K:K+1)=depth(k)+1; K=K+2;
   end; k=k+1;
     

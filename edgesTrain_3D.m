@@ -239,7 +239,7 @@ imgIds    = imgIds(randperm(nImgs,min(nImgs,opts.nImgs)));
 k         = nPos+nNeg; nImgs=min(nImgs,opts.nImgs);
 fids      = sort(randperm(nTotFtrs,round(nTotFtrs*opts.fracFtrs)));
 ftrs      = zeros(k,length(fids),'single');
-ftrTypes  = zeros(length(fids),1,'uint8');
+fWts      = zeros(1,length(fids),'single');
 labels    = zeros(gtWidth,gtWidth,gtWidth,k,'uint8'); 
 offsets   = zeros(3,numLm,k,'single'); 
 posepars  = zeros(nPosePar,k,'single'); k = 0;
@@ -330,12 +330,12 @@ for i = 1:nImgs
   
   % Compute features and store
   ftrs1=[reshape(psReg,[],k1)' stComputeSimFtrs(psSim,opts) reshape(cell2array(psShp),[],k1)'];
-  ftrTypes1=[ ones(nChnFtrs,1); ones(nSimFtrs,1)*2; ones(nShpFtrs,1)*3 ];
+  fWts1=[ ones(nChnFtrs,1)*0.5; ones(nSimFtrs,1)*0.5; ones(nShpFtrs,1)*0.0 ];
   assert(size(ftrs1,2)==nTotFtrs); assert(isa(ftrs1,'single'));
   clear psSim; clear psReg; clear psShp;
   
   ftrs(k+1:k+k1,:)=ftrs1(:,fids);  clear ftrs1;
-  ftrTypes(:)=ftrTypes1(fids);     clear ftrTypes1;
+  fWts(:)=fWts1(fids);             clear fWts1;
   labels(:,:,:,k+1:k+k1)=lbls;     clear lbls;
   offsets(:,:,k+1:k+k1) =offs;     clear offs;
   posepars(:,k+1:k+k1)  =pose;     clear pose;
@@ -348,7 +348,8 @@ spacing=cell2mat(spacing); assert(isrow(unique(spacing,'rows'))); rWts=repmat(sp
 % Train structured edge classifier (random decision tree)
 pTree=struct('minCount',opts.minCount, 'minChild',opts.minChild, ...
   'maxDepth',opts.maxDepth, 'H',opts.nClasses, 'split',opts.split, ...
-  'regSplit',opts.regSplit, 'nodeSelectProb',opts.nodeSelectProb, 'rWts',rWts);
+  'regSplit',opts.regSplit, 'nodeSelectProb',opts.nodeSelectProb, ...
+  'rWts',rWts, 'fWts',fWts);
 
 t=labels;   labels  =cell(k,1);                  for i=1:k, labels{i}=t(:,:,:,i); end; clear t;
 t=offsets;  offsets =zeros(k,numLm*3,'single');  for i=1:k, t2=t(:,:,i); offsets(i,:)=t2(:); end; clear t; clear t2;

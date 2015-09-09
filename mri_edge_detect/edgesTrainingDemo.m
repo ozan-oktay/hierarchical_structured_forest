@@ -1,9 +1,9 @@
 %% Demo for Structured Edge Detector (please see readme.txt first) %%%%
 %%%% add the path
 clear all; close all; clc;
-restoredefaultpath;setenv('LD_LIBRARY_PATH',''); 
-addpath('/vol/biomedic/users/oo2113/str_hier_forest_mri');
-addpath(genpath('/vol/biomedic/users/oo2113/str_hier_forest_mri/toolbox'));
+restoredefaultpath;setenv('LD_LIBRARY_PATH','');
+currentpath=pwd(); parsedpath=strsplit(currentpath,'/'); rootpath=strjoin(parsedpath(1:end-1),'/');
+addpath(rootpath); addpath(genpath(strcat(rootpath,'/toolbox')));
 compileMex();  
 
 %%%% set opts for training (see edgesTrain_3D.m) %%%%
@@ -37,14 +37,14 @@ opts.nTreesEval= 16;                    % [10]  number of trees to evaluate per 
       opts.seed= 1;                     % [1]   seed for random stream (for reproducibility)
  opts.useParfor= 1;                     % [0]   if true train trees in parallel (memory intensive)
   opts.modelDir= 'models/';             % ['models/'] target directory for storing models
-  opts.modelFnm= 'mriFirst_hier_A';     % ['ctmodel'] model filename
-  opts.imageDir= 'mritrainingdata/';    % ['mritrainingdata_sec/'] location of image dataset     
+  opts.modelFnm= 'mriSecond_hier_X';    % ['ctmodel'] model filename
+  opts.imageDir= 'mritrainingdata_sec/';% ['mritrainingdata_sec/'] location of image dataset     
   opts.ctmaxval= 1024;                  % [1024] maximum allowed intensity value - for linear scaling. 
   
 opts.nLandmarks= 6;                     % [false] if true train trees with both classification and regression nodes
   opts.regSplit= 'mse';                 % ['mse'] regression criterion
 opts.nodeSelectProb= 0.50;              % probability of selecting a regression split in training
-   opts.stageId= 0;                     % Framework stage identifier - the zeroth level extracts pems/landmarks - the first level outputs also pose/scale in addition 
+   opts.stageId= 1;                     % Framework stage identifier - the zeroth level extracts pems/landmarks - the first level outputs also pose/scale in addition 
   opts.shpWidth= 100;                   % Width of the window for PEM Shape features
   opts.shpDepth= 20;                    % Depth of the window for PEM Shape features     
  opts.shpSmooth= 3;                     % Smoothing sigma par for PEM Shape features
