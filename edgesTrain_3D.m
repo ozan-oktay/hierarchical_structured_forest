@@ -260,9 +260,9 @@ for i = 1:nImgs
   
   % Read the information for the hierarchical forest 
   if(stageId)
-    pem = load_untouch_nii([trnPemDir imgIds{i} '.' ext]); pem=pem.img;
+    pem = load_untouch_nii([trnPemDir imgIds{i} '_pem.' ext]); pem=pem.img;
     vtk = vtk2Mat         ([trnPemDir imgIds{i} '_lm.vtk']);
-    w2i = world2ImageMat  ([trnPemDir imgIds{i} '.' ext]);
+    w2i = world2ImageMat  ([trnPemDir imgIds{i} '_pem.' ext]);
     dof = readDofParMex   ([trnDofDir imgIds{i} '.dof.gz']);
   else
     pem=[];vtk=[];w2i=[];dof=[];

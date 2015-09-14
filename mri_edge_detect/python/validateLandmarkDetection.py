@@ -37,7 +37,7 @@ def evalPose(groundtruthPoseFile,generatedPoseFile,poseErrorTxt):
 # Base Parameter List - Landmark Locations
 slurm_ncores   = 8
 slurm_nthreads = 1
-slurm_memory   = 30
+slurm_memory   = 25
 slurm_queue    = 'short'
 source_dir     = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect'
 testdata_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata'

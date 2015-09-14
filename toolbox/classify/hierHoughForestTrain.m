@@ -139,12 +139,14 @@ while( k < K )
   if(discr), assert(all(hs1>0 & hs1<=H)); end; 
   if(hier), [meanPose(k,:),covPose(k,:)] = parzenOffset(posepars1); end;
   if(regr), [meanOff(k,:),covOff(k,:)]   = parzenOffset(offsets1); end;
-  classPure=all(hs1(1)==hs1); regPure=isrow(unique(offsets1,'rows')) || isempty(offsets1);
+  classPure = all(hs1(1)==hs1); 
+  hierPure  = isrow(unique(posepars1,'rows'));
+  regPure   = isrow(unique(offsets1,'rows')) || isempty(offsets1);
   if(~discr), if(classPure), distr(k,hs1(1))=1; hsn{k}=hs1(1); else
       distr(k,:)=histc(hs1,1:H)/n1; [~,hsn{k}]=max(distr(k,:)); end; end
       
   % random selection to choose split type  % (1)hierSplit, (2)classSplit, (3)regSplit
-  nType(k,1) = ~tType(k,1) && nType(k,1);
+  nType(k,1) = ~tType(k,1) && ~hierPure  &&  nType(k,1);
   nType(k,2) = ~tType(k,2) && ~classPure && ~nType(k,1);
   nType(k,3) = ~tType(k,3) && ~regPure   && ~nType(k,1);
   
@@ -152,7 +154,7 @@ while( k < K )
   if (nType(k,2)==true && nType(k,3)==true),rD=(rand(1)>=nodeSelectProb); if (rD), nType(k,2)=false; else nType(k,3)=false; end; end
   
   % if pure node or insufficient data don't train split
-  if( all(nType(k,:)==false) || (classPure&&regPure) || n1<=minCount || depth(k)>maxDepth ), k=k+1; continue; end
+  if( all(nType(k,:)==false) || (classPure&&regPure&&hierPure) || n1<=minCount || depth(k)>maxDepth ), k=k+1; continue; end % creating a child
   assert( numel(nType(k,nType(k,:)))==1 );
   
   % split specific parameters
@@ -168,7 +170,7 @@ while( k < K )
   % Perform the node split - search for fid and thr (first try with hier)
   if (nType(k,1))
     [fid,thr,gain]=regForestFindThr(data1,posepars1,dWts(dids1),order1,regSplit); nameType='hier'; tType(k,1)=true;
-    if(gain>1e1),nType(K:K+1,1)=true; else dids{k}=dids1; continue; end;
+    count0=nnz(data(dids1,fids1(fid))<thr); if(gain<1e1||count0<minChild||(n1-count0)<minChild), dids{k}=dids1; continue; else nType(K:K+1,1)=true; end;
   elseif (nType(k,2))
     [fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);nameType='classf'; tType(k,2)=true;
     count0=nnz(data(dids1,fids1(fid))<thr); if(gain<gainThr||count0<minChild||(n1-count0)<minChild), dids{k}=dids1; continue; end; 

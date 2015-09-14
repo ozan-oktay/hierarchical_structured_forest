@@ -5,7 +5,7 @@ function compareLmResults()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 restoredefaultpath;
 rotationMatFile = '/vol/biomedic/users/oo2113/str_hier_forest_mri/biobankdata/dofs/rotation.mat';
-firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/biobankdata/results/distances_mriSecond_hier_ESTD.txt';
+firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/biobankdata/results/distances_mriFirst_hier_A.txt';
 workdirectory   = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
 addpath(genpath(horzcat(workdirectory,'/toolbox')));
   
@@ -13,9 +13,9 @@ firstFileID  = fopen(firstTxtFile, 'r');
 load(rotationMatFile);
 
 nLandmarks = 6;
-formatSpec = ['%s %f %f %f %f %f %f %s %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f'];
+formatSpec = ['%s %f %f %f %f %f %f %s %f %s %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f'];
 firstData  = textscan(firstFileID, formatSpec,'Delimiter',' ');
-errorsLm   = cell(nLandmarks+nLandmarks*3,1);
+errorsLm   = cell(nLandmarks+1+nLandmarks*3,1);
 rotations  = [];
 
 for firstPointInd=1:numel(firstData{1})
@@ -52,6 +52,7 @@ fprintf ('distances txt name: %s\n',firstTxtFile);
 for pointInd=1:nLandmarks
   fprintf (sprintf('*/*/*/ Landmark %d: mean: %6.3f std: %6.3f median: %6.3f \n',pointInd,mean(errorsLm(:,pointInd)),std(errorsLm(:,pointInd)),median(errorsLm(:,pointInd))));
 end
+fprintf (sprintf('*/*/*/ Landmark C: mean: %6.3f std: %6.3f median: %6.3f \n',mean(errorsLm(:,nLandmarks+1)),std(errorsLm(:,nLandmarks+1)),median(errorsLm(:,nLandmarks+1))));
 fprintf ('================================================================\n');
 fprintf (sprintf('*/*/*/ Landmark A: mean: %6.3f std: %6.3f median: %6.3f \n',mean(mean(errorsLm(:,1:nLandmarks))),mean(std(errorsLm(:,1:nLandmarks))),mean(median(errorsLm(:,1:nLandmarks)))));
 fprintf ('\n');
@@ -79,13 +80,13 @@ subplot(1,2,2);plot(error_bins,c_elements,'-*b','LineWidth',2);  xlim([0,max(err
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show the errors for each component ! 
 fprintf ('================================================================\n');
-for pointInd=((1:nLandmarks*3)+nLandmarks)
+for pointInd=((1:nLandmarks*3)+nLandmarks+1)
   fprintf (sprintf('*/*/*/ Landmark %d: mean: %6.3f std: %6.3f median: %6.3f \n',pointInd,mean(errorsLm(:,pointInd)),std(errorsLm(:,pointInd)),median(errorsLm(:,pointInd))));
 end
 fprintf ('================================================================\n');
-fprintf (sprintf('*/*/*/ Landmark X: mean: %6.3f std: %6.3f median: %6.3f \n',mean(mean(errorsLm(:,nLandmarks+1:3:end))),mean(std(errorsLm(:,nLandmarks+1:3:end))),mean(median(errorsLm(:,nLandmarks+1:3:end)))));
-fprintf (sprintf('*/*/*/ Landmark Y: mean: %6.3f std: %6.3f median: %6.3f \n',mean(mean(errorsLm(:,nLandmarks+2:3:end))),mean(std(errorsLm(:,nLandmarks+2:3:end))),mean(median(errorsLm(:,nLandmarks+2:3:end)))));
-fprintf (sprintf('*/*/*/ Landmark Z: mean: %6.3f std: %6.3f median: %6.3f \n',mean(mean(errorsLm(:,nLandmarks+3:3:end))),mean(std(errorsLm(:,nLandmarks+3:3:end))),mean(median(errorsLm(:,nLandmarks+3:3:end)))));
+fprintf (sprintf('*/*/*/ Landmark X: mean: %6.3f std: %6.3f median: %6.3f \n',mean(mean(errorsLm(:,nLandmarks+1+1:3:end))),mean(std(errorsLm(:,nLandmarks+1+1:3:end))),mean(median(errorsLm(:,nLandmarks+1+1:3:end)))));
+fprintf (sprintf('*/*/*/ Landmark Y: mean: %6.3f std: %6.3f median: %6.3f \n',mean(mean(errorsLm(:,nLandmarks+1+2:3:end))),mean(std(errorsLm(:,nLandmarks+1+2:3:end))),mean(median(errorsLm(:,nLandmarks+1+2:3:end)))));
+fprintf (sprintf('*/*/*/ Landmark Z: mean: %6.3f std: %6.3f median: %6.3f \n',mean(mean(errorsLm(:,nLandmarks+1+3:3:end))),mean(std(errorsLm(:,nLandmarks+1+3:3:end))),mean(median(errorsLm(:,nLandmarks+1+3:3:end)))));
 fprintf ('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

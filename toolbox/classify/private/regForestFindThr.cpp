@@ -21,22 +21,18 @@ void forestFindThr( int N, int F, int L, const float *data,
   const int nOutputs = L;
   int i, j, k, j1, j2;
   float *data1; uint32 *order1;
-  double y_ik, w_y_ik, wl, wr, w, vBst, vInit, v;
-  double *sum_left, *sum_right, *sum_root, *mean_left, *mean_right, *mean_root, *var_right, *var_left, *var_root, *sq_sum_left, *sq_sum_right, *sq_sum_root;
-  double impurity_left, impurity_right, impurity_root;
+  double y_ik, w_y_ik, w_yy_ik, wl, wr, w, vBst, vInit, v;
+  double *sum_left, *sum_right, *sum_root, *sq_sum_left, *sq_sum_right, *sq_sum_root;
+  double impurity_root;
   sum_left    = new double [nOutputs];   sum_right  = new double [nOutputs];   sum_root  = new double [nOutputs];
-  mean_left   = new double [nOutputs];   mean_right = new double [nOutputs];   mean_root = new double [nOutputs];
-  var_left    = new double [nOutputs];   var_right  = new double [nOutputs];   var_root  = new double [nOutputs];
   sq_sum_left = new double [nOutputs]; sq_sum_right = new double [nOutputs]; sq_sum_root = new double [nOutputs];
 
   // perform initialization
   vBst = vInit = 0; w = 0; fid = 1; thr = 0;
-  impurity_left = impurity_right = impurity_root = 0;
+  impurity_root = 0;
   for( j=0; j<N; j++ ) w+=ws[j];
   for( k=0; k<nOutputs; k++ ){
       sum_left[k]=0;    sum_right[k]=0;    sum_root[k]=0;
-      mean_left[k]=0;   mean_right[k]=0;   mean_root[k]=0;
-      var_left[k]=0;    var_right[k]=0;    var_root[k]=0;
       sq_sum_left[k]=0; sq_sum_right[k]=0; sq_sum_root[k]=0;
   }
 
@@ -45,46 +41,44 @@ void forestFindThr( int N, int F, int L, const float *data,
     for( j=0; j<N; j++ ){
         y_ik            = offsets[j + k*N];
         w_y_ik          = ws[j] * y_ik;
+        w_yy_ik         = w_y_ik * y_ik;
         sum_root[k]    += w_y_ik;
-        sq_sum_root[k] += w_y_ik * y_ik;
-      }
-    mean_root[k]   = sum_root[k] / w;
-    var_root[k]    = sq_sum_root[k] / w - mean_root[k] * mean_root[k] ;
-    impurity_root += ( var_root[k] / (double) nOutputs );
+        sq_sum_root[k] += w_yy_ik;
+    }
+    impurity_root += (sq_sum_root[k] - sum_root[k] * sum_root[k] / w);
   }
+  impurity_root /= ((double)nOutputs*w);
   vBst=vInit=impurity_root;
 
   // loop over features, then thresholds (data is sorted by feature value)
   for( i=0; i<F; i++ ){
     order1=(uint32*) order+i*N; data1=(float*) data+i*size_t(N);
     for ( k=0; k<nOutputs; k++ ) {
-        sum_left[k] =0;           mean_left[k]=0;             var_left[k]=0;            sq_sum_left[k]=0;
-        sum_right[k]=sum_root[k]; mean_right[k]=mean_root[k]; var_right[k]=var_root[k]; sq_sum_right[k]=sq_sum_root[k];
+        sum_left[k] =0;            sq_sum_left[k]=0;
+        sum_right[k]=sum_root[k];  sq_sum_right[k]=sq_sum_root[k];
     }
-    impurity_left=0; wl=0; impurity_right=impurity_root; wr=w;
+    wl=0; wr=w;
 
     for( j=0; j<N-1; j++ ) {
         j1=order1[j]; j2=order1[j+1];
 
         for ( k=0; k<nOutputs; k++){
-            y_ik   = offsets[j1 + k*N];
-            w_y_ik = ws[j1] * y_ik;
+            y_ik    = offsets[j1 + k*N];
+            w_y_ik  = ws[j1] * y_ik;
+            w_yy_ik = w_y_ik * y_ik;
             sum_left[k] += w_y_ik;
             sum_right[k]-= w_y_ik;
-            sq_sum_left[k] += w_y_ik * y_ik;
-            sq_sum_right[k]-= w_y_ik * y_ik;
+            sq_sum_left[k] += w_yy_ik;
+            sq_sum_right[k]-= w_yy_ik;
         }
 
         wl+=ws[j1];wr-=ws[j1];v=0;
 
         for ( k=0; k<nOutputs; k++){
-            mean_left[k] = sum_left[k] / wl;
-            mean_right[k]= sum_right[k] / wr;
-            var_left[k]  = sq_sum_left[k] / wl - mean_left[k]  * mean_left[k];
-            var_right[k] = sq_sum_right[k]/ wr - mean_right[k] * mean_right[k];
+            v += (sq_sum_left[k]  - sum_left[k]  * sum_left[k]  / wl);
+            v += (sq_sum_right[k] - sum_right[k] * sum_right[k] / wr);
         }
-
-        for ( k=0; k<nOutputs; k++ ) {v+=(wl*var_left[k]+wr*var_right[k]);} v/=((double)nOutputs*w);
+        v/=((double)nOutputs*w);
 
         if( v<vBst && data1[j2]-data1[j1]>=1e-6f ) {
           vBst=v; fid=i+1; thr=0.5f*(data1[j1]+data1[j2]);}
@@ -93,8 +87,6 @@ void forestFindThr( int N, int F, int L, const float *data,
 
   // clean up the arrays
   delete [] sum_left;    delete [] sum_right;    delete [] sum_root;
-  delete [] mean_left;   delete [] mean_right;   delete [] mean_root;
-  delete [] var_left;    delete [] var_right;    delete [] var_root;
   delete [] sq_sum_left; delete [] sq_sum_right; delete [] sq_sum_root;
   gain = vInit-vBst;
 

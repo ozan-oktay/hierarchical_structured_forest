@@ -2,7 +2,7 @@ function analyze_model()
 %close all;
 colors=['-*b';'-*g';'-*r';'-*k';'-*c'];
 fprintf('Loading the model... \n');
-modelName='/vol/biomedic/users/oo2113/str_hier_forest_mri/models/forest/mriSecond_hier_A1.mat';
+modelName='/vol/biomedic/users/oo2113/str_hier_forest_mri/models/forest/mriFirst_hier_X1.mat';
 load(modelName);
 fprintf('Model is loaded.\n');
 
@@ -22,7 +22,7 @@ end
 
 figure(1); 
 for sId=1:nSplitTypes, plot(1:nDepth,splitTypeDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
-grid on; h_legend=legend('Classification Node','Offset Regression Node','Rotation Regression Node'); set(h_legend,'FontSize',14);
+grid on; h_legend=legend('Classification Node','Offset Regression Node','Rotation Regression Node','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Perc of Nodes');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -48,7 +48,7 @@ end
 
 figure(2); 
 for sId=1:nFeatureTypes, plot(1:nDepth,fidDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
-grid on; h_legend=legend('Channel Features','SelfSimilarity Features','Shape Features'); set(h_legend,'FontSize',14);
+grid on; h_legend=legend('Channel Features','SelfSimilarity Features','Shape Features','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Perc of Nodes');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -65,7 +65,7 @@ for dId=1:nDepth
 end
 figure(3); plot(1:nDepth,nodeDist(:,1),colors(1,:),'LineWidth',2); hold on;
            plot(1:nDepth,nodeDist(:,2),colors(2,:),'LineWidth',2); grid on; xlabel('Tree Depth'); ylabel('Log 2 of Number of Nodes at each level');
-           h_legend=legend('Computed Num Nodes','Expected Num Nodes'); set(h_legend,'FontSize',14);
+           h_legend=legend('Computed Num Nodes','Expected Num Nodes','Location','NorthWest'); set(h_legend,'FontSize',14);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -84,14 +84,14 @@ for dId=1:nDepth
   gainInd  = model.gains(indices);
   for sId=1:nFeatureTypes
     nodeIndices = (featureLim(sId)<=fidsInd) & (fidsInd<featureLim(sId+1));
-    gainDist(dId,sId) = sum(gainInd(nodeIndices));  
+    gainDist(dId,sId) = sum(gainInd(nodeIndices)) / numel(gainInd(nodeIndices));  
   end
 end
 
 figure(4); 
 for sId=1:nFeatureTypes, plot(1:nDepth,gainDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
-grid on; h_legend=legend('Channel Features','SelfSimilarity Features','Shape Features'); set(h_legend,'FontSize',14);
-xlabel('Tree Depth'); ylabel('Information Gain');
+grid on; h_legend=legend('Channel Features','SelfSimilarity Features','Shape Features','Location','NorthWest'); set(h_legend,'FontSize',14);
+xlabel('Tree Depth'); ylabel('Average Information Gain');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
