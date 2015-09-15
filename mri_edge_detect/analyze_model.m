@@ -22,7 +22,7 @@ end
 
 figure(1); 
 for sId=1:nSplitTypes, plot(1:nDepth,splitTypeDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
-grid on; h_legend=legend('Classification Node','Offset Regression Node','Rotation Regression Node','Location','NorthWest'); set(h_legend,'FontSize',14);
+grid on; h_legend=legend('Hier Node','Classification Node','Offset Regression Node','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Perc of Nodes');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -184,7 +184,7 @@ while( k < K )
     child(k)=K; fids(k)=fid-1; thrs(k)=thr;
     gains(k)=gain; %https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/tree/_tree.pyx - line 3581
     dids{K}=dids1(left); dids{K+1}=dids1(~left);
-    splitType(k)=find(strcmpi(nameType,{'classf','regr','hier'}));
+    splitType(k)=find(strcmpi(nameType,{'hier','classf','regr'}));
     depth(K:K+1)=depth(k)+1; K=K+2;
   end; k=k+1;
     

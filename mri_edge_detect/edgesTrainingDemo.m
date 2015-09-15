@@ -18,7 +18,7 @@ compileMex();
   opts.minChild= 8;                     % [8]   minimum number of data points allowed at child nodes
   opts.maxDepth= 64;                    % [64]  maximum depth of tree (default value 64)
 opts.discretize= 'kmeans';              % ['kmeans'] options include 'pca' and 'kmeans'
-  opts.nSamples= 400;                   % [600] number of samples for clustering structured labels 
+  opts.nSamples= 600;                   % [600] number of samples for clustering structured labels 
   opts.nClasses= 2;                     % [2]   number of classes (clusters) for binary splits
      opts.split= 'entropy';             % ['entropy'] options include 'gini', 'entropy' and 'twoing'
   opts.nOrients= 0;                     % [0]   number of orientations per gradient scale   
@@ -37,7 +37,7 @@ opts.nTreesEval= 16;                    % [10]  number of trees to evaluate per 
       opts.seed= 1;                     % [1]   seed for random stream (for reproducibility)
  opts.useParfor= 1;                     % [0]   if true train trees in parallel (memory intensive)
   opts.modelDir= 'models/';             % ['models/'] target directory for storing models
-  opts.modelFnm= 'mriSecond_hier_Y3';   % ['ctmodel'] model filename
+  opts.modelFnm= 'mriSecond_hier_Y4';   % ['ctmodel'] model filename
   opts.imageDir= 'mritrainingdata_sec/';% ['mritrainingdata_sec/'] location of image dataset     
   opts.ctmaxval= 1024;                  % [1024] maximum allowed intensity value - for linear scaling. 
   
@@ -52,7 +52,7 @@ opts.nodeSelectProb= 0.50;              % probability of selecting a regression 
   opts.nPosePar= 2;                     % Number of pose parameters used in tree training (grountruth information)
   
 %%%% train edge detector (~150m/20Gb per tree, proportional to nPos/nNeg) %%%%
-if (matlabpool('size')), matlabpool close; end; 
-if (opts.useParfor), matlabpool(4); end;
+if (~isempty(gcp('nocreate'))), poolobj = gcp('nocreate'); delete(poolobj); end; 
+if (opts.useParfor), pool=parpool(4); end;
 tic, edgesTrain_3D(opts); toc; % will load model if already trained
-if (matlabpool('size')), matlabpool close; end;
+if (~isempty(gcp('nocreate'))), poolobj = gcp('nocreate'); delete(poolobj); end; 

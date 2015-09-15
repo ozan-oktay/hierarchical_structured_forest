@@ -3,13 +3,13 @@
 function edgesTestingDemo (modelname,imagename,savedir)
   %% set opts for testing and training (see edgesTrain_3D.m) %%%%
   restoredefaultpath;setenv('LD_LIBRARY_PATH',''); 
-  workdirectory = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
-  addpath(genpath(horzcat(workdirectory,'/toolbox')));
+  currentpath=pwd(); parsedpath=strsplit(currentpath,'/'); workdirectory=strjoin(parsedpath(1:end-1),'/');
+  addpath(workdirectory); addpath(genpath(strcat(workdirectory,'/toolbox')));
   %compileMex();  
   
   opts=edgesTrain_3D();                    % default options (good settings)
   opts.modelDir   = 'models/';             % model will be in models/forest
-  opts.modelFnm   = 'mriSecond_hier_X';    % model name
+  opts.modelFnm   = 'mriFirst_hier_X2';    % model name
   if (nargin >= 1), opts.modelFnm  = modelname; end;
   
   model=edgesTrain_3D(opts);           	     % will load model if already trained
@@ -23,8 +23,8 @@ function edgesTestingDemo (modelname,imagename,savedir)
   opts.pixel_type         = 'uint16';         % output image pixel type
   opts.pixel_spacing      = [1.25,1.25,2.00]; % intensity and pem pixel spacing in world coordinates
   opts.referenceimagename = horzcat(workdirectory,'/',model.opts.imageDir,'reference/ref_image.nii.gz');
-  opts.imagename          = horzcat(workdirectory,'/segmentation/targets/Atlas15/cine_sax_ED.nii.gz');
-  opts.savedir            = horzcat(workdirectory,'/segmentation/targets/Atlas15/pems2');  
+  opts.imagename          = horzcat(workdirectory,'/mritestingdata/images/14DA01414_ed0_3D.nii.gz');
+  opts.savedir            = horzcat(workdirectory,'/tmp');  
 
   if (nargin >= 2), opts.imagename = imagename; end;
   if (nargin >= 3), opts.savedir   = savedir;   end; mkdir(opts.savedir)

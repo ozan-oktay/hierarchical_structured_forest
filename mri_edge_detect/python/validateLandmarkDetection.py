@@ -41,7 +41,7 @@ slurm_memory   = 25
 slurm_queue    = 'short'
 source_dir     = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect'
 testdata_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata'
-modelname      = 'mriFirst_hier_A'
+modelname      = 'mriSecond_hier_Y3'
 
 input_img_dir  = testdata_dir + '/images'
 ground_lm_dir  = testdata_dir + '/landmarks'
@@ -91,7 +91,7 @@ for ind in range(numSubjects):
   else:
 
       # matlab multi-atlas script command
-      cmd_pem   = '/usr/lib/matlab/R2014a/bin/matlab -nodesktop -nosplash -r \\"cd(\'{0}\'); addpath(\'{0}\'); edgesTestingDemo(\'{1}\',\'{2}\',\'{3}\'); quit;\\"'.format(source_dir,modelname,inputimages[ind],output_dir)
+      cmd_pem   = '/usr/lib/matlab/R2015a/bin/matlab -nodesktop -nosplash -r \\"cd(\'{0}\'); addpath(\'{0}\'); edgesTestingDemo(\'{1}\',\'{2}\',\'{3}\'); quit;\\"'.format(source_dir,modelname,inputimages[ind],output_dir)
       cmd_eval  = '/vol/medic02/users/oo2113/Build/irtk_master/bin/pevaluation {0} {1} -output {2}'.format( groundtruthLandmarks[ind], generatedLandmarks[ind], distanceTxtFile )
       logname   = '/vol/bitbucket/oo2113/tmp/logfile.out'
       cmd_slurm = cmd_pem + '; ' + cmd_eval
@@ -99,7 +99,7 @@ for ind in range(numSubjects):
       sbatch(cmd_slurm, logname, mem=slurm_memory, n=slurm_nthreads, c=slurm_ncores, queue=slurm_queue, verbose=True, dryrun=False)
 
       '''
-      cmd_pem   = '/usr/lib/matlab/R2014a/bin/matlab -nodesktop -nosplash -r \\"cd(\'\\\'\'{0}\'\\\'\'); edgesTestingDemo(\'\\\'\'{1}\'\\\'\',\'\\\'\'{2}\'\\\'\',\'\\\'\'{3}\'\\\'\'); quit;\\"'.format(source_dir,modelname,inputimages[ind],outputimages[ind])
+      cmd_pem   = '/usr/lib/matlab/R2015a/bin/matlab -nodesktop -nosplash -r \\"cd(\'\\\'\'{0}\'\\\'\'); edgesTestingDemo(\'\\\'\'{1}\'\\\'\',\'\\\'\'{2}\'\\\'\',\'\\\'\'{3}\'\\\'\'); quit;\\"'.format(source_dir,modelname,inputimages[ind],outputimages[ind])
       cmd_eval  = '/vol/medic02/users/oo2113/Build/irtk_master/bin/pevaluation {0} {1} -output {2}'.format( groundtruthLandmarks[ind], generatedLandmarks[ind], distanceTxtFile )
       cmd_pmk   = cmd_pem + '; ' + cmd_eval
       os.system('pmk.py --start --command "{0}"'.format(cmd_pmk))
