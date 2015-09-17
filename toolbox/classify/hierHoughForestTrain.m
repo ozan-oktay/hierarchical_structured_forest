@@ -70,8 +70,10 @@ function forest = hierHoughForestTrain( data, hs, offsets, posepars, varargin )
 % get additional parameters and fill in remaining parameters
 dfs={ 'M',1, 'H',[], 'L',[], 'N1',[], 'FC',[], 'FR',[], 'split','gini', 'minCount',1, ...
   'minChild',1, 'maxDepth',64, 'dWts',[], 'fWts',[], 'rWts',[], 'discretize','', ...
-  'regSplit','mse', 'nodeSelectProb',0.5};
-[M,H,L,N1,FC,FR,splitStr,minCount,minChild,maxDepth,dWts,fWts,rWts,discretize,regSplitStr,nodeSelectProb] = getPrmDflt(varargin,dfs,1);
+  'regSplit','mse', 'nodeSelectProb',0.5, 'dataInf',[]};
+
+[M,H,L,N1,FC,FR,splitStr,minCount,minChild,maxDepth,dWts,fWts,rWts,discretize,...
+  regSplitStr,nodeSelectProb,dataInf] = getPrmDflt(varargin,dfs,1);
 
 discr=~isempty(discretize); regr=~isempty(offsets); hier=~isempty(posepars);
 [N,F]=size(data); assert(length(hs)==N); P=size(posepars,2);
@@ -104,7 +106,7 @@ if(~isa(posepars,'single')),   posepars=single(posepars); end
 if(~isa(dWts,'single')),           dWts=single(dWts);     end
 
 % train M random trees on different subsets of data
-prmTree = {H,FC,FR,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier};
+prmTree = {H,FC,FR,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier,dataInf};
 for i=1:M
   if(N==N1), data1=data; hs1=hs; offsets1=offsets; posepars1=posepars; dWts1=dWts; else
     d=wswor(dWts,N1,4); data1=data(d,:); hs1=hs(d); offsets1=offsets(d,:); posepars1=posepars(d,:);
@@ -119,8 +121,9 @@ end
 function tree = treeTrain( data, hs, offsets, posepars, dWts, prmTree )
 
 % Train single random tree.
-[H,FC,FR,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier]=deal(prmTree{:});
+[H,FC,FR,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier,dataInf]=deal(prmTree{:});
 N=size(data,1); K=2*N-1; discr=~isempty(discretize);
+nImgs    =max(dataInf.data2Img);   affMat=zeros(nImgs,nImgs,'single');
 thrs     =zeros(K,1,'single');      distr=zeros(K,H,'single');
 fids     =zeros(K,1,'uint32');      gains=zeros(K,1,'single');
 meanOff  =zeros(K,L,'single');     covOff=zeros(K,L*L,'single');
@@ -153,11 +156,13 @@ while( k < K )
   % if both classification and regression nodes are selected, then do a random choice
   if (nType(k,2)==true && nType(k,3)==true),rD=(rand(1)>=nodeSelectProb); if (rD), nType(k,2)=false; else nType(k,3)=false; end; end
   
-  % if pure node or insufficient data don't train split
-  if( all(nType(k,:)==false) || (classPure&&regPure&&hierPure) || n1<=minCount || depth(k)>maxDepth ), k=k+1; continue; end % creating a child
-  assert( numel(nType(k,nType(k,:)))==1 );
-  
+  % if pure node or insufficient data don't train split  
+  if( all(nType(k,:)==false) || (classPure&&regPure&&hierPure) || n1<=minCount || depth(k)>maxDepth )
+    k=k+1; affMat = affMat + computeAffMat(dataInf.data2Img(dids1),nImgs); continue; 
+  end % creating a child
+    
   % split specific parameters
+  assert( numel(nType(k,nType(k,:)))==1 );
   if     (nType(k,1)), fWts1=ones(1,numel(fWts),'single')/numel(fWts); F1=FR; 
   elseif (nType(k,2)), fWts1=fWts;                                     F1=FC; 
   elseif (nType(k,3)), fWts1=fWts;                                     F1=FR;
@@ -186,16 +191,19 @@ while( k < K )
     dids{K}=dids1(left); dids{K+1}=dids1(~left);
     splitType(k)=find(strcmpi(nameType,{'hier','classf','regr'}));
     depth(K:K+1)=depth(k)+1; K=K+2;
-  end; k=k+1;
+  end; k=k+1; % Go to the next split
     
 end
 
 % create output model struct
 K=1:K-1; if(discr), hsn={hsn(K)}; else hsn=[hsn{K}]'; end
+dataInf.affMat=affMat; dataInf=rmfield(dataInf,'data2Img');
 tree=struct('fids',fids(K),'thrs',thrs(K),'child',child(K),...
-  'distr',distr(K,:),'hs',hsn,'count',count(K),'depth',depth(K),...
-  'gains',gains(K), 'meanOff',meanOff(K,:)', 'covOff',covOff(K,:)', ...
-  'splitType',splitType(K), 'meanPose',meanPose(K,:)', 'covPose',covPose(K,:)' );
+            'distr',distr(K,:),'hs',hsn,'count',count(K),'depth',depth(K),...
+            'gains',gains(K), 'meanOff',meanOff(K,:)', 'covOff',covOff(K,:)', ...
+            'splitType',splitType(K), 'meanPose',meanPose(K,:)', ... 
+            'covPose',covPose(K,:)', 'dataInf',dataInf );
+ 
 end
 
 function ids = wswor( prob, N, trials )

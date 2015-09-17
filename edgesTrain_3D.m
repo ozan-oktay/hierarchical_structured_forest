@@ -151,6 +151,7 @@ model.covOff   =zeros(numLm*numLm*3*3,nNodes,nTrees,'single');
 model.meanPose =zeros(nPosePar,nNodes,nTrees,'single');
 model.covPose  =zeros(nPosePar*nPosePar,nNodes,nTrees,'single');
 model.splitType=zeros(nNodes,nTrees,'uint8');
+model.dataInf  =cell(nTrees,1);
 model.fids=Z; model.child=Z; model.count=Z; model.depth=Z;
 model.segs=zeros(gtWidth,gtWidth,gtWidth,nNodes,nTrees,'uint8');
 for i=1:nTrees, tree=trees(i); nNodes1=size(tree.fids,1);
@@ -166,6 +167,7 @@ for i=1:nTrees, tree=trees(i); nNodes1=size(tree.fids,1);
   model.covOff(:,1:nNodes1,i) = tree.covOff;
   model.meanPose(:,1:nNodes1,i) = tree.meanPose;
   model.covPose(:,1:nNodes1,i) = tree.covPose;
+  model.dataInf{i} = tree.dataInf;
 end
 
 % remove very small segments (<=5 pixels)
@@ -235,17 +237,19 @@ set(stream,'Substream',treeInd);
 RandStream.setGlobalStream( stream );
 
 % collect positive and negative patches and compute features
-imgIds    = imgIds(sort(randperm(nImgs,min(nImgs,opts.nImgs))));
-k         = nPos+nNeg; nImgs=min(nImgs,opts.nImgs);
-fids      = sort(randperm(nTotFtrs,round(nTotFtrs*opts.fracFtrs)));
-ftrs      = zeros(k,length(fids),'single');
-fWts      = zeros(1,length(fids),'single');
-labels    = zeros(gtWidth,gtWidth,gtWidth,k,'uint8'); 
-offsets   = zeros(3,numLm,k,'single'); 
-posepars  = zeros(nPosePar,k,'single'); k = 0;
-poseOrd   = {'rz','rx','ry'};
-tid       = ticStatus('Collecting data',30,1);
-spacing   = cell(nImgs,1);
+imgIds     = imgIds(sort(randperm(nImgs,min(nImgs,opts.nImgs))));
+usedImgIds = cell(nImgs,1); 
+k          = nPos+nNeg; nImgs=min(nImgs,opts.nImgs);
+fids       = sort(randperm(nTotFtrs,round(nTotFtrs*opts.fracFtrs)));
+ftrs       = zeros(k,length(fids),'single');
+fWts       = zeros(1,length(fids),'single');
+labels     = zeros(gtWidth,gtWidth,gtWidth,k,'uint8'); 
+offsets    = zeros(3,numLm,k,'single'); 
+posepars   = zeros(nPosePar,k,'single');
+data2Img   = zeros(k,1,'uint32'); k = 0;
+poseOrd    = {'rz','rx','ry'};
+tid        = ticStatus('Collecting data',30,1);
+spacing    = cell(nImgs,1);
 
 for i = 1:nImgs
   
@@ -289,10 +293,10 @@ for i = 1:nImgs
   M=gt.Boundaries; M(bwdist(M)<gtRadius)=1;
   [y,x,z]=ind2sub(siz,find(M.*B)); k2=min(length(y),ceil(nPos/nImgs));
   rp=randperm(length(y),k2); y=y(rp); x=x(rp); z=z(rp);
-  xyz=[xyz; x y z ones(k2,1)*1]; k1=k1+k2;  p_t=k2; %#ok<AGROW> 
+  xyz=[xyz; x y z ones(k2,1)*1]; k1=k1+k2;  %#ok<AGROW> 
   [y,x,z]=ind2sub(siz,find(~M.*B)); k2=min(length(y),ceil(nNeg/nImgs));
   rp=randperm(length(y),k2); y=y(rp); x=x(rp); z=z(rp);
-  xyz=[xyz; x y z zeros(k2,1)*1]; k1=k1+k2;  n_t=k2; %#ok<AGROW>
+  xyz=[xyz; x y z zeros(k2,1)*1]; k1=k1+k2;  %#ok<AGROW>
   if(k1>size(ftrs,1)-k), k1=size(ftrs,1)-k; xyz=xyz(1:k1,:); end
   
   % Crop patches and ground truth labels
@@ -338,6 +342,8 @@ for i = 1:nImgs
   labels(:,:,:,k+1:k+k1)=lbls;     clear lbls;
   offsets(:,:,k+1:k+k1) =offs;     clear offs;
   posepars(:,k+1:k+k1)  =pose;     clear pose;
+  data2Img(k+1:k+k1)=i;
+  if(k<size(ftrs,1)), usedImgIds(i)=imgIds(i); end; 
   k=k+k1; if(k==size(ftrs,1)), tocStatus(tid,1); break; end
   tocStatus(tid,i/nImgs);
 end
@@ -348,7 +354,7 @@ spacing=cell2mat(spacing); assert(isrow(unique(spacing,'rows'))); rWts=repmat(sp
 pTree=struct('minCount',opts.minCount, 'minChild',opts.minChild, ...
   'maxDepth',opts.maxDepth, 'H',opts.nClasses, 'split',opts.split, ...
   'regSplit',opts.regSplit, 'nodeSelectProb',opts.nodeSelectProb, ...
-  'rWts',rWts, 'fWts',fWts);
+  'rWts',rWts, 'fWts',fWts, 'dataInf',struct('data2Img',data2Img,'imgIds',{imgIds}));
 
 t=labels;   labels  =cell(k,1);                  for i=1:k, labels{i}=t(:,:,:,i); end; clear t;
 t=offsets;  offsets =zeros(k,numLm*3,'single');  for i=1:k, t2=t(:,:,i); offsets(i,:)=t2(:); end; clear t; clear t2;
