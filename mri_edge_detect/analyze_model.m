@@ -2,7 +2,9 @@ function analyze_model()
 %close all;
 colors=['-*b';'-*g';'-*r';'-*k';'-*c'];
 fprintf('Loading the model... \n');
-modelName='/vol/biomedic/users/oo2113/str_hier_forest_mri/models/forest/mriFirst_hier_X1.mat';
+currentpath=pwd(); parsedpath=strsplit(currentpath,'/'); rootpath=strjoin(parsedpath(1:end-1),'/');
+addpath(rootpath); modelName=strcat(rootpath,'/models/forest/mriFirst_hier_X1.mat');
+
 load(modelName);
 fprintf('Model is loaded.\n');
 

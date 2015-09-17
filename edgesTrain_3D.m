@@ -235,7 +235,7 @@ set(stream,'Substream',treeInd);
 RandStream.setGlobalStream( stream );
 
 % collect positive and negative patches and compute features
-imgIds    = imgIds(randperm(nImgs,min(nImgs,opts.nImgs)));
+imgIds    = imgIds(sort(randperm(nImgs,min(nImgs,opts.nImgs))));
 k         = nPos+nNeg; nImgs=min(nImgs,opts.nImgs);
 fids      = sort(randperm(nTotFtrs,round(nTotFtrs*opts.fracFtrs)));
 ftrs      = zeros(k,length(fids),'single');
@@ -294,7 +294,6 @@ for i = 1:nImgs
   rp=randperm(length(y),k2); y=y(rp); x=x(rp); z=z(rp);
   xyz=[xyz; x y z zeros(k2,1)*1]; k1=k1+k2;  n_t=k2; %#ok<AGROW>
   if(k1>size(ftrs,1)-k), k1=size(ftrs,1)-k; xyz=xyz(1:k1,:); end
-  display(sprintf('positive sample ratio is: %2.2f\n',p_t/(n_t+p_t)));
   
   % Crop patches and ground truth labels
   psReg=zeros(imWidth/shrink,imWidth/shrink,imWidth/shrink,nChns,k1,'single');
