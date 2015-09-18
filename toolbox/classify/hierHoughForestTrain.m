@@ -132,7 +132,6 @@ splitType=zeros(K,1,'uint8');       nType=false(K,3);
                                     tType=false(K,3);
 child=fids; count=fids; depth=fids; gainThr=1e-10;
 hsn=cell(K,1); dids=cell(K,1); dids{1}=uint32(1:N); k=1; K=2; 
-if(hier),nType(1,1) =true;end;
 
 while( k < K )
   % get node data and store distribution
@@ -149,15 +148,18 @@ while( k < K )
       distr(k,:)=histc(hs1,1:H)/n1; [~,hsn{k}]=max(distr(k,:)); end; end
       
   % random selection to choose split type  % (1)hierSplit, (2)classSplit, (3)regSplit
-  nType(k,1) = ~tType(k,1) && ~hierPure  &&  nType(k,1);
-  nType(k,2) = ~tType(k,2) && ~classPure && ~nType(k,1);
-  nType(k,3) = ~tType(k,3) && ~regPure   && ~nType(k,1);
+  nType(k,1) = ~tType(k,1) && ~hierPure;
+  nType(k,2) = ~tType(k,2) && ~classPure;
+  nType(k,3) = ~tType(k,3) && ~regPure;
   
   % if both classification and regression nodes are selected, then do a random choice
-  if (nType(k,2)==true && nType(k,3)==true),rD=(rand(1)>=nodeSelectProb); if (rD), nType(k,2)=false; else nType(k,3)=false; end; end
+  if (nType(k,1)==true  && nType(k,2)==true  && nType(k,3)==false),rD=(rand(1)>=nodeSelectProb); if (rD), nType(k,1)=false; else nType(k,2)=false; end; end
+  if (nType(k,1)==true  && nType(k,2)==false && nType(k,3)==true), rD=(rand(1)>=nodeSelectProb); if (rD), nType(k,1)=false; else nType(k,3)=false; end; end
+  if (nType(k,1)==false && nType(k,2)==true  && nType(k,3)==true), rD=(rand(1)>=nodeSelectProb); if (rD), nType(k,2)=false; else nType(k,3)=false; end; end
+  if (nType(k,1)==true  && nType(k,2)==true  && nType(k,3)==true), rD=randi([1,3],1,1);                   nType(k,:)=false;      nType(k,rD)=true; end
   
   % if pure node or insufficient data don't train split  
-  if( all(nType(k,:)==false) || (classPure&&regPure&&hierPure) || n1<=minCount || depth(k)>maxDepth )
+  if( all(nType(k,:)==false) || (hierPure&&classPure&&regPure) || n1<=minCount || depth(k)>maxDepth )
     k=k+1; affMat = affMat + computeAffMat(dataInf.data2Img(dids1),nImgs); continue; 
   end % creating a child
     

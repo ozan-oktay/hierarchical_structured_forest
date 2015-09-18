@@ -5,8 +5,7 @@ function compareLmResults()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 restoredefaultpath;
 rotationMatFile = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/dofs/rotation.mat';
-%firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/distances_mriSecond_hier_Y3.txt';
-firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/distances_interUser.txt';
+firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/distances_mriSecond_hier_Mix3.txt';
 workdirectory   = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
 addpath(genpath(horzcat(workdirectory,'/toolbox')));
   
@@ -62,19 +61,24 @@ fclose(firstFileID);
 % plot the subplots of rotations vs landmark error
 figure(1); 
 for ind=1:nLandmarks, subplot(2,3,ind);   
-  plot(rotations,errorsLm(:,ind),'*b'); [RHO,PVAL] = corr(rotations,errorsLm(:,ind),'type','Pearson'); 
-  title(sprintf('rho %f, pval %f',RHO,PVAL)); grid on; ylabel('Landmark Errors in mm'); xlabel('Rotation around the z-axis in degrees');
+  plot(rotations,errorsLm(:,ind),'*b'); [RHO,PVAL] = corr(rotations,errorsLm(:,ind),'type','Pearson'); rangeY=[0:0.1:35]; rangeX=[min(rotations),max(rotations)];
+  meanY=mean(errorsLm(:,ind)); stdY=std(errorsLm(:,ind)); maxX=max(rotations); pdfY=normpdf(rangeY,meanY,stdY); hold on; plot(maxX-300*pdfY,rangeY,'-r','Linewidth',3); plot(maxX-300*max(pdfY),meanY,'*r','Linewidth',7); hold off;
+  title(sprintf('rho %f, pval %f',RHO,PVAL)); grid on; ylabel('Landmark Errors in mm'); xlabel('Rotation around the z-axis in degrees'); ylim([rangeY(1) rangeY(end)]); xlim([rangeX(1) rangeX(2)])
 end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show the distribution of the mean landmark errors wrt subjects
 error_bins  = 0:1:30;
-n_elem      = histc(mean(errorsLm(:,1:nLandmarks),2),error_bins);
+data        = mean(errorsLm(:,1:nLandmarks),2);
+pdfMean     = mean(data);
+pdfStd      = std(data);
+pdfRange    = 0:0.1:max(error_bins);
+n_elem      = histc(data,error_bins);
 norm_n_elem = n_elem / sum(n_elem);
 c_elements  = cumsum(n_elem) / sum(n_elem);
 figure(2); 
-subplot(1,2,1);bar(error_bins,norm_n_elem,'BarWidth',1); xlim([0,max(error_bins)]); xlabel('Mean Landmark Error [mm]','FontSize',12); ylabel('Frequency','FontSize',12); grid on;
+subplot(1,2,1);bar(error_bins,norm_n_elem,'BarWidth',1); xlim([0,max(error_bins)]); xlabel('Mean Landmark Error [mm]','FontSize',12); ylabel('Frequency','FontSize',12); grid on; hold on; plot(pdfRange,normpdf(pdfRange,pdfMean,pdfStd),'-r','Linewidth',3); hold off;
 subplot(1,2,2);plot(error_bins,c_elements,'-*b','LineWidth',2);  xlim([0,max(error_bins)]); xlabel('Mean Landmark Error [mm]','FontSize',12); ylabel('Percentage','FontSize',12); grid on;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -90,11 +94,6 @@ fprintf (sprintf('*/*/*/ Landmark Y: mean: %6.3f std: %6.3f median: %6.3f \n',me
 fprintf (sprintf('*/*/*/ Landmark Z: mean: %6.3f std: %6.3f median: %6.3f \n',mean(mean(errorsLm(:,nLandmarks+1+3:3:end))),mean(std(errorsLm(:,nLandmarks+1+3:3:end))),mean(median(errorsLm(:,nLandmarks+1+3:3:end)))));
 fprintf ('\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-
 
 end
 
