@@ -34,11 +34,8 @@ Ishrink=imResample3D(I,size(I)/shrink); k=k+1; chns{k}=Ishrink;
 for i = 1:2, s=2^(i-1);
 if(s==shrink), I1=Ishrink; else I1=imResample3D(I,size(I)/s); end
 I1 = convTri3D( I1, opts.grdSmooth );
-[M,~,Gd] = gradientMag3D( I1, opts.normRad, 0.05 ); 
-if(s==1), H = gradientHist3D( M, Gd, max(1,shrink/s), opts.nOrients);
-else      H = []; end
+M  = gradientMag3D( I1, opts.normRad, 0.05 ); 
 k=k+1; chns{k}=imResample3D(M,size(M)*s/shrink);
-k=k+1; chns{k}=imResample3D(H,size(H)*max(1,s/shrink));
 end
 
 chndim = ndims(I)+1;

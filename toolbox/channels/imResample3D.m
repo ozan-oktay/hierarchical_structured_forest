@@ -50,7 +50,7 @@ mat = varargin{1};
 
 % check for interpolation mode input
 if nargin == 2
-    interp_mode = '*linear';
+    interp_mode = 'linear';
 elseif nargin ~= 3
     error('incorrect number of inputs');
 else
@@ -101,7 +101,8 @@ case 3
 
     % compute interpolation; for a matrix indexed as [M, N, P], the
     % axis variables must be given in the order N, M, P
-    mat_rs = interp3(y_mat, x_mat, z_mat, mat, y_mat_interp, x_mat_interp, z_mat_interp, interp_mode); 
+    mat_rs = ba_interp3(y_mat, x_mat, z_mat, double(mat), y_mat_interp, x_mat_interp, z_mat_interp, interp_mode); 
+    
 case 4
   
     % extract the original number of pixels from the size of the matrix
@@ -126,7 +127,7 @@ case 4
     for chn=1:Nc_input
         % compute interpolation; for a matrix indexed as [M, N, P], the
         % axis variables must be given in the order N, M, P
-        mat_rs(:,:,:,chn) = interp3(y_mat, x_mat, z_mat, mat(:,:,:,chn), y_mat_interp, x_mat_interp, z_mat_interp, interp_mode); 
+        mat_rs(:,:,:,chn) = ba_interp3(y_mat, x_mat, z_mat, double(mat(:,:,:,chn)), y_mat_interp, x_mat_interp, z_mat_interp, interp_mode); 
     end
     
 otherwise
@@ -184,7 +185,5 @@ error ('resample::antialiasing dimension error.\n');
 end
 
 end
-
-
 
 end
