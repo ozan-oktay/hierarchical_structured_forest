@@ -1,8 +1,6 @@
 /*******************************************************************************
-* Piotr's Image&Video Toolbox      Version 3.24
-* Copyright 2013 Piotr Dollar.  [pdollar-at-caltech.edu]
-* Please email me if you find bugs, or have suggestions or questions!
-* Licensed under the Simplified BSD License [see external/bsd.txt]
++* Author : Ozan Oktay 
++* Date   : July 2015
 *******************************************************************************/
 #include <string.h>
 #include <stdint.h>

@@ -17,7 +17,7 @@ if (~isempty(model.dataInf{1}.affMat))
   for ii=2:nTrees, model.dataInf{1}.affMat=model.dataInf{1}.affMat+model.dataInf{ii}.affMat;end
   affMat   = model.dataInf{1}.affMat / nTrees;
   nImgs    = size(affMat,1); 
-  rotmat   = strcat(rootpath,'/mritrainingdata_sec/dofs/rotation.mat'); load(rotmat,'filename','z_rot');
+  rotmat   = strcat(rootpath,'/mritrainingdata_sec/dofs/patientParam.mat'); load(rotmat,'filename','z_rot','scale'); 
   filename = cellstr(filename); %#ok<NODEF>
   rotval   = cell(nImgs,1);
   

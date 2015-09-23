@@ -27,6 +27,7 @@ if not inputdir:
 mov_landmarks  = []
 dofoutnames    = []
 z_rotations    = []
+scales         = []
 filenames      = []
 ref_landmark     = inputdir + '/reference/ref_lm.vtk'
 mov_landmark_dir = inputdir + '/landmarks'
@@ -44,10 +45,12 @@ dofoutnames   = sorted(dofoutnames)
 filenames     = sorted(filenames)
 
 for mov_landmark,dofoutname in zip(mov_landmarks,dofoutnames):
-    callmyfunction('prreg {0} {1} -dofout {2}'.format(ref_landmark,mov_landmark,dofoutname))
+    callmyfunction('pareg {0} {1} -dofout {2}'.format(ref_landmark,mov_landmark,dofoutname))
     dofparams=irtk.AffineTransformation(filename=dofoutname)
     print dofparams
+    scale_val = (dofparams.sx + dofparams.sy + dofparams.sz)/3.0
     z_rotations.append(dofparams.rz)
+    scales.append(scale_val)
 
-matdict={'filename':filenames, 'z_rot':z_rotations}
-scipy.io.savemat(out_dof_dir+'/rotation.mat', matdict )
+matdict={'filename':filenames, 'z_rot':z_rotations, 'scale':scales}
+scipy.io.savemat(out_dof_dir+'/patientParam.mat', matdict )

@@ -70,17 +70,17 @@ function forest = hierHoughForestTrain( data, hs, offsets, posepars, varargin )
 % get additional parameters and fill in remaining parameters
 dfs={ 'M',1, 'H',[], 'L',[], 'N1',[], 'FC',[], 'FR',[], 'split','gini', 'minCount',1, ...
   'minChild',1, 'maxDepth',64, 'dWts',[], 'fWts',[], 'rWts',[], 'discretize','', ...
-  'regSplit','mse', 'nodeSelectProb',0.5, 'dataInf',[]};
+  'regSplit','mse', 'nodeProb',[], 'dataInf',[]};
 
 [M,H,L,N1,FC,FR,splitStr,minCount,minChild,maxDepth,dWts,fWts,rWts,discretize,...
-  regSplitStr,nodeSelectProb,dataInf] = getPrmDflt(varargin,dfs,1);
+  regSplitStr,nodeProb,dataInf] = getPrmDflt(varargin,dfs,1);
 
 discr=~isempty(discretize); regr=~isempty(offsets); hier=~isempty(posepars);
 [N,F]=size(data); assert(length(hs)==N); P=size(posepars,2);
 minChild=max(1,minChild); minCount=max([1 minCount minChild]);
-if(~regr), nodeSelectProb=0.0; end;
-if(regr), assert(length(offsets)==N);end
-if(hier), assert(length(posepars)==N);end
+
+if(hier),  assert(length(posepars)==N);end
+if(regr),  assert(length(offsets)==N);end
 if(isempty(L)), L=size(offsets,2); end;
 if(isempty(H)), H=max(hs); end; assert(discr || all(hs>0 & hs<=H));
 if(isempty(N1)), N1=round(5*N/M); end; N1=min(N,N1);
@@ -89,12 +89,16 @@ if(isempty(FR)), FR=round(F/3); end; FR=min(F,FR);
 if(isempty(dWts)), dWts=ones(1,N,'single'); end; dWts=dWts/sum(dWts);
 if(isempty(fWts)), fWts=ones(1,F,'single'); end; fWts=fWts/sum(fWts);
 if(isempty(rWts)), rWts=ones(1,L,'single'); end; rWts=rWts/sum(rWts);
+if(isempty(nodeProb)), nodeProb=ones(1,3,'single'); end; 
+if(~hier), nodeProb(1)=0.0; end; 
+if(~regr), nodeProb(3)=0.0; end; 
+nodeProb=nodeProb/sum(nodeProb(:)); 
 split=find(strcmpi(splitStr,{'gini','entropy','twoing'}))-1;
 regSplit=find(strcmpi(regSplitStr,{'mse','covariance'}))-1;
 
 if(isempty(split)), error('unknown splitting criteria: %s',splitStr); end
 if(isempty(regSplit)), error('unknown regression splitting criteria: %s',regSplit); end
-assert ( nodeSelectProb>=0 && nodeSelectProb<=1 );
+assert ( all(nodeProb>=0) && all(nodeProb<=1) && (sum(nodeProb(:))==1) );
 
 % make sure data has correct types
 if(~isa(data,'single')),           data=single(data);     end
@@ -106,7 +110,7 @@ if(~isa(posepars,'single')),   posepars=single(posepars); end
 if(~isa(dWts,'single')),           dWts=single(dWts);     end
 
 % train M random trees on different subsets of data
-prmTree = {H,FC,FR,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier,dataInf};
+prmTree = {H,FC,FR,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeProb,hier,dataInf};
 for i=1:M
   if(N==N1), data1=data; hs1=hs; offsets1=offsets; posepars1=posepars; dWts1=dWts; else
     d=wswor(dWts,N1,4); data1=data(d,:); hs1=hs(d); offsets1=offsets(d,:); posepars1=posepars(d,:);
@@ -121,7 +125,7 @@ end
 function tree = treeTrain( data, hs, offsets, posepars, dWts, prmTree )
 
 % Train single random tree.
-[H,FC,FR,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nodeSelectProb,hier,dataInf]=deal(prmTree{:});
+[H,FC,FR,L,P,minCount,minChild,maxDepth,fWts,rWts,split,discretize,regr,regSplit,nP,hier,dataInf]=deal(prmTree{:});
 N=size(data,1); K=2*N-1; discr=~isempty(discretize);
 nImgs    =max(dataInf.data2Img);   affMat=zeros(nImgs,nImgs,'single');
 thrs     =zeros(K,1,'single');      distr=zeros(K,H,'single');
@@ -153,10 +157,11 @@ while( k < K )
   nType(k,3) = ~tType(k,3) && ~regPure;
   
   % if both classification and regression nodes are selected, then do a random choice
-  if (nType(k,1)==true  && nType(k,2)==true  && nType(k,3)==false),rD=(rand(1)>=nodeSelectProb); if (rD), nType(k,1)=false; else nType(k,2)=false; end; end
-  if (nType(k,1)==true  && nType(k,2)==false && nType(k,3)==true), rD=(rand(1)>=nodeSelectProb); if (rD), nType(k,1)=false; else nType(k,3)=false; end; end
-  if (nType(k,1)==false && nType(k,2)==true  && nType(k,3)==true), rD=(rand(1)>=nodeSelectProb); if (rD), nType(k,2)=false; else nType(k,3)=false; end; end
-  if (nType(k,1)==true  && nType(k,2)==true  && nType(k,3)==true), rD=randi([1,3],1,1);                   nType(k,:)=false;      nType(k,rD)=true; end
+  if (nType(k,1)==true  && nType(k,2)==true  && nType(k,3)==false),rD=(rand(1)<=(nP(1)/(nP(1)+nP(2)))); if (rD), nType(k,2)=false; else nType(k,1)=false; end; end
+  if (nType(k,1)==true  && nType(k,2)==false && nType(k,3)==true), rD=(rand(1)<=(nP(1)/(nP(1)+nP(3)))); if (rD), nType(k,3)=false; else nType(k,1)=false; end; end
+  if (nType(k,1)==false && nType(k,2)==true  && nType(k,3)==true), rD=(rand(1)<=(nP(2)/(nP(2)+nP(3)))); if (rD), nType(k,3)=false; else nType(k,2)=false; end; end
+  if (nType(k,1)==true  && nType(k,2)==true  && nType(k,3)==true), nType(k,:)=false; rD=rand(1); 
+    if(rD<=nP(1)), nType(k,1)=true; elseif(rD<=(nP(1)+nP(2))), nType(k,2)=true; else nType(k,3)=true; end; end;
   
   % if pure node or insufficient data don't train split  
   if( all(nType(k,:)==false) || (hierPure&&classPure&&regPure) || n1<=minCount || depth(k)>maxDepth )
@@ -176,8 +181,8 @@ while( k < K )
     
   % Perform the node split - search for fid and thr (first try with hier)
   if (nType(k,1))
-    [fid,thr,gain]=regForestFindThr(data1,posepars1,dWts(dids1),order1,regSplit); nameType='hier'; tType(k,1)=true;
-    count0=nnz(data(dids1,fids1(fid))<thr); if(gain<1e1||count0<minChild||(n1-count0)<minChild), dids{k}=dids1; continue; else nType(K:K+1,1)=true; end;
+    [fid,thr,gain]=regForestFindThrJnt(data1,posepars1,dWts(dids1),order1,regSplit); nameType='hier'; tType(k,1)=true;
+    count0=nnz(data(dids1,fids1(fid))<thr); if(gain<gainThr||count0<minChild||(n1-count0)<minChild), dids{k}=dids1; continue; else nType(K:K+1,1)=true; end;
   elseif (nType(k,2))
     [fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);nameType='classf'; tType(k,2)=true;
     count0=nnz(data(dids1,fids1(fid))<thr); if(gain<gainThr||count0<minChild||(n1-count0)<minChild), dids{k}=dids1; continue; end; 

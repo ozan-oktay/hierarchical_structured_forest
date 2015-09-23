@@ -22,4 +22,3 @@ S = convTri3D( M, normRad );
 M = M./(S + normConst);
 
 end
-
