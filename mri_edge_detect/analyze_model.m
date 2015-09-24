@@ -5,7 +5,7 @@ colors=['-*b';'-*g';'-*r'];
 inv_colors=['-*r';'-*g';'-*b'];
 fprintf('Loading the model... \n');
 currentpath=pwd(); parsedpath=strsplit(currentpath,'/'); rootpath=strjoin(parsedpath(1:end-1),'/');
-addpath(rootpath); modelName=strcat(rootpath,'/models/forest/mymodel002.mat');
+addpath(rootpath); modelName=strcat(rootpath,'/models/forest/mymodel020_RS.mat');
 load(modelName); addpath(genpath(strcat(rootpath,'/toolbox')));
 fprintf('Model is loaded.\n');
 display(model.opts)
@@ -37,14 +37,10 @@ if (~isempty(model.dataInf{1}.affMat))
   scatter(Y(:,1),Y(:,2),scaleval,rotval,'filled');colormap('jet'); colorbar; grid on;
   xlabel('Dimension 1'); ylabel('Dimension 2'); title('Proximity Plot of Images VS Rotation Info');
   
-  figure(2);
-  scatter(Y(:,1),Y(:,2),100,scaleval,'filled');colormap('jet'); colorbar; grid on;
-  xlabel('Dimension 1'); ylabel('Dimension 2'); title('Proximity Plot of Images VS Scale Info');
-  
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%{
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DISPLAY THE DISTRIBUTION OF SPLIT TYPES VS TREE DEPTH
@@ -62,7 +58,7 @@ end
 
 figure(2); 
 for sId=1:nSplitTypes, plot(1:nDepth,splitTypeDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
-grid on; h_legend=legend('Rotation Regression Node','Classification Node','Offset Regression Node','Location','NorthWest'); set(h_legend,'FontSize',14);
+grid on; h_legend=legend('Stratification Node','Classification Node','Regression Node','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Perc of Nodes');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -109,36 +105,28 @@ figure(4); plot(1:nDepth,nodeDist(:,1),colors(1,:),'LineWidth',2); hold on;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% DISPLAY HOW MUCH GAIN IS OBTAINED FROM EACH FEATURE
-nDepth   = min(max(model.depth));
-nChnFtrs      = model.opts.nChnFtrs;
-nSimFtrs      = model.opts.nSimFtrs;
-nShpFtrs      = model.opts.nShpFtrs;
-nFeatureTypes = 3;
-gainDist      = zeros(nDepth,nFeatureTypes);
-featureLim    = [0,nChnFtrs,nChnFtrs+nSimFtrs,nChnFtrs+nSimFtrs+nShpFtrs]+1;
+% DISPLAY HOW MUCH AVERAGE GAIN IS OBTAINED FOR EACH SPLIT TYPE
+nDepth        = min(max(model.depth));
+nSplitTypes   = max(max(model.splitType));
+gainDist      = zeros(nDepth,nSplitTypes);
 
 for dId=1:nDepth
-  indices  = (model.depth==dId);
-  fidsInd  = model.fids(indices);
-  gainInd  = model.gains(indices);
-  for sId=1:nFeatureTypes
-    nodeIndices = (featureLim(sId)<=fidsInd) & (fidsInd<featureLim(sId+1));
+  indices    = (model.depth==dId);
+  splitTypes = model.splitType(indices);
+  gainInd    = model.gains(indices);
+  for sId=1:nSplitTypes
+    nodeIndices       = (splitTypes==sId); 
     gainDist(dId,sId) = sum(gainInd(nodeIndices)) / numel(gainInd(nodeIndices));  
   end
 end
 
 figure(5); 
-for sId=1:nFeatureTypes, plot(1:nDepth,gainDist(:,sId),inv_colors(sId,:),'LineWidth',2); hold on; end
-grid on; h_legend=legend('Channel Features','SelfSimilarity Features','Shape Features','Location','NorthWest'); set(h_legend,'FontSize',14);
+for sId=1:nSplitTypes, plot(1:nDepth,gainDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
+grid on; h_legend=legend('Stratification Node','Classification Node','Regression Node','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Average Information Gain');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%}
 end
-
-
-
 
 
 % --- leigs function for Laplacian eigenmap.
