@@ -1,13 +1,14 @@
 function analyze_model()
 close all;
 model=[];
-colors=['-*b';'-*g';'-*r';'-*k';'-*c'];
+colors=['-*b';'-*g';'-*r'];
+inv_colors=['-*r';'-*g';'-*b'];
 fprintf('Loading the model... \n');
 currentpath=pwd(); parsedpath=strsplit(currentpath,'/'); rootpath=strjoin(parsedpath(1:end-1),'/');
-addpath(rootpath); modelName=strcat(rootpath,'/models/forest/mriSecond_hier_AFFT.mat');
+addpath(rootpath); modelName=strcat(rootpath,'/models/forest/mymodel002.mat');
 load(modelName); addpath(genpath(strcat(rootpath,'/toolbox')));
 fprintf('Model is loaded.\n');
-
+display(model.opts)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DISPLAY THE PROXIMITY MAP OF TRAINING IMAGES
@@ -20,25 +21,30 @@ if (~isempty(model.dataInf{1}.affMat))
   rotmat   = strcat(rootpath,'/mritrainingdata_sec/dofs/patientParam.mat'); load(rotmat,'filename','z_rot','scale'); 
   filename = cellstr(filename); %#ok<NODEF>
   rotval   = cell(nImgs,1);
+  scaleval = cell(nImgs,1);
   
   %%%%%%%% FIND THE ROTATION VALUES OF THE TRAINING DATASET %%%%%%%%
   for mm=1:nImgs
-       t_name=model.dataInf{1}.imgIds{mm}; res=strfind(filename,t_name); nn=find(~cellfun(@isempty,res)); rotval{mm}=z_rot(nn);     
+       t_name=model.dataInf{1}.imgIds{mm}; res=strfind(filename,t_name); nn=find(~cellfun(@isempty,res)); rotval{mm}=z_rot(nn); scaleval{mm}=scale(nn);
   end
 
   %%%%%%%% CONVERT IT TO A DISSIMILARITY MATRIX %%%%%%%%
-  rotval = squeeze(cell2array(rotval));
-  affMat = 1./(affMat+1e-15); affMat(eye(nImgs)>0)=0.0;             
-  [Y,E] = cmdscale(affMat);
-
+  rotval   = squeeze(cell2array(rotval));
+  scaleval = squeeze(cell2array(scaleval)); scaleval = (scaleval-min(scaleval)+1) * (100/(max(scaleval)-min(scaleval)+1));
+  affMat   = 1./(affMat+1e-15); affMat(eye(nImgs)>0)=0.0;             
+  [Y,E]    = leigs(affMat, 10, 3);
   figure(1);
-  scatter(Y(:,1),Y(:,2),30,rotval,'filled');colormap('jet'); colorbar; grid on;
+  scatter(Y(:,1),Y(:,2),scaleval,rotval,'filled');colormap('jet'); colorbar; grid on;
   xlabel('Dimension 1'); ylabel('Dimension 2'); title('Proximity Plot of Images VS Rotation Info');
+  
+  figure(2);
+  scatter(Y(:,1),Y(:,2),100,scaleval,'filled');colormap('jet'); colorbar; grid on;
+  xlabel('Dimension 1'); ylabel('Dimension 2'); title('Proximity Plot of Images VS Scale Info');
   
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%{
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DISPLAY THE DISTRIBUTION OF SPLIT TYPES VS TREE DEPTH
@@ -56,7 +62,7 @@ end
 
 figure(2); 
 for sId=1:nSplitTypes, plot(1:nDepth,splitTypeDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
-grid on; h_legend=legend('Classification Node','Offset Regression Node','Rotation Regression Node','Location','NorthWest'); set(h_legend,'FontSize',14);
+grid on; h_legend=legend('Rotation Regression Node','Classification Node','Offset Regression Node','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Perc of Nodes');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -81,7 +87,7 @@ for dId=1:nDepth
 end
 
 figure(3); 
-for sId=1:nFeatureTypes, plot(1:nDepth,fidDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
+for sId=1:nFeatureTypes, plot(1:nDepth,fidDist(:,sId),inv_colors(sId,:),'LineWidth',2); hold on; end
 grid on; h_legend=legend('Channel Features','SelfSimilarity Features','Shape Features','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Perc of Nodes');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -123,10 +129,53 @@ for dId=1:nDepth
 end
 
 figure(5); 
-for sId=1:nFeatureTypes, plot(1:nDepth,gainDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
+for sId=1:nFeatureTypes, plot(1:nDepth,gainDist(:,sId),inv_colors(sId,:),'LineWidth',2); hold on; end
 grid on; h_legend=legend('Channel Features','SelfSimilarity Features','Shape Features','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Average Information Gain');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%}
+end
 
+
+
+
+
+% --- leigs function for Laplacian eigenmap.
+% Written by Belkin & Niyogi, 2002.
+function [E,V] = leigs(inpAff, PARAM, NE) 
+
+  [Z,I] = sort ( inpAff,2);
+  n     = size(inpAff,1);
+  A     = zeros(n,n); 
+  for i=1:n
+    for j=2:PARAM+1
+        A(i,I(i,j))= Z(i,j); 
+        A(I(i,j),i)= Z(i,j); 
+    end;    
+  end;
+
+  display('Adjacency Matrix is ready'); clear Z; clear I; clear dt;
+  W = A; 
+
+  [A_i, A_j, A_v] = find(A);  % disassemble the sparse matrix
+  clear A; 
+  t = mean(A_v)*2;
+
+  for i = 1: size(A_i)  
+      W(A_i(i), A_j(i)) = exp(1).^((-1/t)*(A_v(i)));
+      %W(A_i(i), A_j(i))  = 1.0;
+  end;
+  D = sum(W(:,:),2);   
+
+  L = spdiags(D,0,speye(size(W,1)))-W;
+  display('Laplacian Graph is Ready')
+  clear D; clear W; clear A_i; clear A_j; clear A_v;
+  opts.tol = 1e-9;
+  opts.issym=1; 
+  opts.disp = 0; 
+  [E,V] = eigs(L,NE+1,'sm',opts);
+  V = diag(V); V = diag(V(NE:-1:1));
+  E = E(:,NE:-1:1);
+  
 end

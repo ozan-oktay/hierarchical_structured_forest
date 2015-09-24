@@ -18,10 +18,10 @@ def sbatch(cmd, mem=5, c=10, n=1, queue='short', verbose=False, dryrun=False):
 slurm_ncores = 1
 slurm_nthreads = 8
 slurm_memory = 250
-slurm_queue = 'interactive'
-source_dir = '/vol/medic02/users/oo2113/str_hier_forest_mri/mri_edge_detect/'
-nodeProb=[[0.06,0.47,0.47],[0.1,0.45,0.45],[0.2,0.4,0.4],[0.333,0.333,0.333]];
-modelname=['mymodel006','mymodel010','mymodel020','mymodel033']
+slurm_queue = 'long'
+source_dir = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect/'
+nodeProb=[[0.00,0.50,0.50]];
+modelname=['my_model000_RS']
 
 for i in range(len(modelname)):
   # matlab multi-atlas script command

@@ -10,10 +10,10 @@ compileMex();
 %%%% set opts for training (see edgesTrain_3D.m) %%%%
    opts.imWidth= 28;                    % [28]  width of image patches    
    opts.gtWidth= 12;                    % [12]  width of ground truth patches     
-      opts.nPos= 1e6;                   % [1e6] number of positive patches per tree
-      opts.nNeg= 1e6;                   % [1e6] number of negative patches per tree
+      opts.nPos= 5e5;                   % [1e6] number of positive patches per tree
+      opts.nNeg= 5e5;                   % [1e6] number of negative patches per tree
      opts.nImgs= Inf;                   % [75]  maximum number of images to use for training
-    opts.nTrees= 16;                    % [16]  number of trees in forest to train
+    opts.nTrees= 8;                     % [16]  number of trees in forest to train
   opts.fracFtrs= 0.125;                 % [1/8] fraction of features to use to train each tree      
   opts.minCount= 1;                     % [1]   minimum number of data points to allow split
   opts.minChild= 8;                     % [8]   minimum number of data points allowed at child nodes
@@ -32,7 +32,7 @@ opts.discretize= 'kmeans';              % ['kmeans'] options include 'pca' and '
     opts.stride= 2;                     % [2]   stride at which to compute edges
 opts.multiscale= 1;                     % [0]   if true run multiscale edge detector
    opts.sharpen= 2;                     % [2]   sharpening amount (can only decrease after training)
-opts.nTreesEval= 16;                    % [10]  number of trees to evaluate per location
+opts.nTreesEval= 8;                     % [10]  number of trees to evaluate per location
   opts.nThreads= 8;                     % [8]   number of threads for evaluation of trees
        opts.nms= 0;                     % [0]   if true apply non-maximum suppression to edges
       opts.seed= 1;                     % [1]   seed for random stream (for reproducibility)
@@ -54,6 +54,6 @@ opts.nLandmarks= 6;                     % [false] if true train trees with both 
   
 %%%% train edge detector (~150m/20Gb per tree, proportional to nPos/nNeg) %%%%
 if (~isempty(gcp('nocreate'))), poolobj = gcp('nocreate'); delete(poolobj); end; 
-if (opts.useParfor), pool=parpool(4); end;
+if (opts.useParfor), pool=parpool(8); end;
 tic, edgesTrain_3D(opts); toc; % will load model if already trained
 if (~isempty(gcp('nocreate'))), poolobj = gcp('nocreate'); delete(poolobj); end; 

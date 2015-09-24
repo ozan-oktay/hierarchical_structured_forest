@@ -98,7 +98,7 @@ regSplit=find(strcmpi(regSplitStr,{'mse','covariance'}))-1;
 
 if(isempty(split)), error('unknown splitting criteria: %s',splitStr); end
 if(isempty(regSplit)), error('unknown regression splitting criteria: %s',regSplit); end
-assert ( all(nodeProb>=0) && all(nodeProb<=1) && (sum(nodeProb(:))==1) );
+assert ( all(nodeProb>=0) && all(nodeProb<=1) && (abs(sum(nodeProb(:))-1)<1e-3) );
 
 % make sure data has correct types
 if(~isa(data,'single')),           data=single(data);     end

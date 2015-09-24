@@ -40,8 +40,8 @@ slurm_nthreads = 1
 slurm_memory   = 25
 slurm_queue    = 'short'
 source_dir     = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect'
-testdata_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritrainingdata_sec'
-modelname      = 'mriSecond_hier_Test'
+testdata_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata'
+modelname      = 'mymodel020_RS_L1SIX'
 
 input_img_dir  = testdata_dir + '/images'
 ground_lm_dir  = testdata_dir + '/landmarks'
@@ -74,7 +74,7 @@ groundtruthPoseFiles = sorted(groundtruthPoseFiles)
 generatedPoseFiles   = sorted(generatedPoseFiles)
 
 # Evaluation parameters
-numSubjects      = min([5,len(inputimages)])
+numSubjects      = min([500000,len(inputimages)])
 print ('number of subjects is {0}'.format(numSubjects))
 distanceTxtFile  = results_dir + '/distances_'       + modelname + '.txt'
 poseErrorTxtFile = results_dir + '/poseEstimations_' + modelname + '.txt'
