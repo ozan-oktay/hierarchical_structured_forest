@@ -2,6 +2,7 @@ __author__ = 'ozan'
 
 import os
 import subprocess
+import numpy as np
 
 # Sbatch function to pass a command to slurm cluster
 def sbatch(cmd, logname, mem=5, c=10, n=1, queue='short', verbose=False, dryrun=False):
@@ -19,9 +20,13 @@ def createFolder(directory):
 def evalPose(groundtruthPoseFile,generatedPoseFile,poseErrorTxt):
   import irtk
   import re
+
   # Read the ground-truth file
   grndDof   = irtk.AffineTransformation(filename=groundtruthPoseFile)
-  grndArray = [grndDof.rz,grndDof.rx,grndDof.ry]
+  affine_trans = np.array(grndDof.matrix())
+  determinant  = np.linalg.det(affine_trans)
+  grndScale    = np.power(determinant,1.0/3.0)
+  grndRot      = grndDof.rz
 
   # Read the generated pose text file
   txtfile     = open(generatedPoseFile, 'r')
@@ -31,7 +36,7 @@ def evalPose(groundtruthPoseFile,generatedPoseFile,poseErrorTxt):
 
   # Write the values
   with open(poseErrorTxt, "a") as myfile:
-    myfile.write('file: {0} grnd: {1} cmpt: {2} conf(std): {3}\n'.format(inputimages[ind],grndArray[0],computedMean[0],computedStd[0]))
+    myfile.write('file: {0} grnd: {1} {2} cmpt: {3} {4} conf(std): {5} {6}\n'.format(inputimages[ind],grndRot,grndScale,computedMean[0],computedMean[1],computedStd[0],computedStd[1]))
     myfile.close()
 
 # Base Parameter List - Landmark Locations
@@ -41,7 +46,7 @@ slurm_memory   = 25
 slurm_queue    = 'short'
 source_dir     = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect'
 testdata_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata'
-modelname      = 'mymodel000_RS'
+modelname      = 'master_forest'
 
 input_img_dir  = testdata_dir + '/images'
 ground_lm_dir  = testdata_dir + '/landmarks'
@@ -87,7 +92,7 @@ for ind in range(numSubjects):
 
     cmd_eval  = '/vol/medic02/users/oo2113/Build/irtk_master/bin/pevaluation {0} {1} -output {2}'.format( groundtruthLandmarks[ind], generatedLandmarks[ind], distanceTxtFile )
     os.system(cmd_eval)
-    #if os.path.exists(generatedPoseFiles[ind]): evalPose(groundtruthPoseFiles[ind],generatedPoseFiles[ind],poseErrorTxtFile)
+    if os.path.exists(generatedPoseFiles[ind]): evalPose(groundtruthPoseFiles[ind],generatedPoseFiles[ind],poseErrorTxtFile)
 
   else:
 

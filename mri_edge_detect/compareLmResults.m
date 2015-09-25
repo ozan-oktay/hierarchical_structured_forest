@@ -4,19 +4,21 @@ function compareLmResults()
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 restoredefaultpath;
-rotationMatFile = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/dofs/patientParam.mat';
-firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/distances_mymodel000_RS.txt';
-workdirectory   = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
+patientMatFile = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mribiobankdata/dofs/patientParam.mat';
+firstTxtFile   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mribiobankdata/results/distances_master_forest.txt';
+workdirectory  = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
 addpath(genpath(horzcat(workdirectory,'/toolbox')));
   
 firstFileID  = fopen(firstTxtFile, 'r');
-load(rotationMatFile);
+load(patientMatFile);
+
 
 nLandmarks = 6;
 formatSpec = ['%s %f %f %f %f %f %f %s %f %s %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f'];
 firstData  = textscan(firstFileID, formatSpec,'Delimiter',' ');
 errorsLm   = cell(nLandmarks+1+nLandmarks*3,1);
 rotations  = [];
+scales     = [];
 
 for firstPointInd=1:numel(firstData{1})
   fistPointLongName=firstData{1}(firstPointInd);
@@ -34,6 +36,7 @@ for firstPointInd=1:numel(firstData{1})
     rotPointName=strsplit(filename(rotPointInd,:),'/');
     if (isequal(remSpace(rotPointName{end}),firstPointName))
       rotations = [rotations ; z_rot(rotPointInd)];
+      scales    = [scales ; scale(rotPointInd)];
       foundflag = true;
     end
     if (foundflag), break; end
@@ -65,6 +68,14 @@ for ind=1:nLandmarks, subplot(2,3,ind);
   meanY=mean(errorsLm(:,ind)); stdY=std(errorsLm(:,ind)); maxX=max(rotations); pdfY=normpdf(rangeY,meanY,stdY); hold on; plot(maxX-300*pdfY,rangeY,'-r','Linewidth',3); plot(maxX-300*max(pdfY),meanY,'*r','Linewidth',7); hold off;
   title(sprintf('rho %f, pval %f',RHO,PVAL)); grid on; ylabel('Landmark Errors in mm'); xlabel('Rotation around the z-axis in degrees'); ylim([rangeY(1) rangeY(end)]); xlim([rangeX(1) rangeX(2)])
 end;
+% plot the subplots of scales vs landmark error
+figure(2); 
+for ind=1:nLandmarks, subplot(2,3,ind);   
+  plot(scales,errorsLm(:,ind),'*b'); [RHO,PVAL] = corr(scales,errorsLm(:,ind),'type','Pearson'); rangeY=[0:0.1:35]; rangeX=[min(scales),max(scales)];
+  meanY=mean(errorsLm(:,ind)); stdY=std(errorsLm(:,ind)); maxX=max(scales); pdfY=normpdf(rangeY,meanY,stdY); hold on; plot(maxX-300*pdfY,rangeY,'-r','Linewidth',3); plot(maxX-300*max(pdfY),meanY,'*r','Linewidth',7); hold off;
+  title(sprintf('rho %f, pval %f',RHO,PVAL)); grid on; ylabel('Landmark Errors in mm'); xlabel('Rotation around the z-axis in degrees'); ylim([rangeY(1) rangeY(end)]); xlim([rangeX(1) rangeX(2)])
+end;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -77,7 +88,7 @@ pdfRange    = 0:0.1:max(error_bins);
 n_elem      = histc(data,error_bins);
 norm_n_elem = n_elem / sum(n_elem);
 c_elements  = cumsum(n_elem) / sum(n_elem);
-figure(2); 
+figure(3); 
 subplot(1,2,1);bar(error_bins,norm_n_elem,'BarWidth',1); xlim([0,max(error_bins)]); xlabel('Mean Landmark Error [mm]','FontSize',12); ylabel('Frequency','FontSize',12); grid on; hold on; plot(pdfRange,normpdf(pdfRange,pdfMean,pdfStd),'-r','Linewidth',3); hold off;
 subplot(1,2,2);plot(error_bins,c_elements,'-*b','LineWidth',2);  xlim([0,max(error_bins)]); xlabel('Mean Landmark Error [mm]','FontSize',12); ylabel('Percentage','FontSize',12); grid on;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

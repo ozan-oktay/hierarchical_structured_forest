@@ -6,6 +6,7 @@ import subprocess
 import irtk
 import scipy.io
 import argparse
+import numpy as np
 
 # Function call
 def callmyfunction(mycmd):
@@ -47,9 +48,15 @@ filenames     = sorted(filenames)
 for mov_landmark,dofoutname in zip(mov_landmarks,dofoutnames):
     callmyfunction('pareg {0} {1} -dofout {2}'.format(ref_landmark,mov_landmark,dofoutname))
     dofparams=irtk.AffineTransformation(filename=dofoutname)
+
     print dofparams
-    scale_val = (dofparams.sx + dofparams.sy + dofparams.sz)/3.0
-    z_rotations.append(dofparams.rz)
+
+    affine_trans = np.array(dofparams.matrix())
+    determinant  = np.linalg.det(affine_trans)
+    scale_val    = np.power(determinant,1.0/3.0)
+    rot_val      = dofparams.rz
+
+    z_rotations.append(rot_val)
     scales.append(scale_val)
 
 matdict={'filename':filenames, 'z_rot':z_rotations, 'scale':scales}

@@ -69,9 +69,10 @@ function edgesTestingDemo (modelname,imagename,savedir)
   tstart=tic; houghVotes2Vtk (HV,vtkParams); fprintf (sprintf('time lm extraction: %f sec\n',toc(tstart)));
   
   % save the pose values 
-  fprintf (sprintf('Estimated pose values (mean): %3.3f %3.3f\n',pVal(1),pVal(3)));
-  fprintf (sprintf('Estimated pose values (std): %3.3f %3.3f\n' ,sqrt(pVal(2)),sqrt(pVal(4))));
-  fileID = fopen(opts.posetxtsavename,'w');fprintf(fileID,'mean val: %3.3f %3.3f\n',pVal(1),pVal(3));fprintf(fileID,'std val: %3.3f %3.3f\n',sqrt(pVal(2)),sqrt(pVal(4)));fclose(fileID);
+  fileID = fopen(opts.posetxtsavename,'w');
+  fprintf(fileID,'mean val: %3.3f %3.3f\n',pVal(1),pVal(3));
+  fprintf(fileID,'std val: %3.3f %3.3f\n' ,sqrt(pVal(2)),sqrt(pVal(4)));
+  fclose(fileID);
     
 end
 
