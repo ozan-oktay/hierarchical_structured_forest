@@ -146,6 +146,7 @@ nNodes=0; for i=1:nTrees, nNodes=max(nNodes,size(trees(i).fids,1)); end
 model.opts=opts; Z=zeros(nNodes,nTrees,'uint32');
 model.thrs     =zeros(nNodes,nTrees,'single');
 model.gains    =zeros(nNodes,nTrees,'single');
+model.gainsInd =zeros(nPosePar,nNodes,nTrees,'single');
 model.meanOff  =zeros(numLm*3,nNodes,nTrees,'single');
 model.covOff   =zeros(numLm*numLm*3*3,nNodes,nTrees,'single');
 model.meanPose =zeros(nPosePar,nNodes,nTrees,'single');
@@ -158,6 +159,7 @@ for i=1:nTrees, tree=trees(i); nNodes1=size(tree.fids,1);
   model.fids(1:nNodes1,i) = tree.fids;
   model.thrs(1:nNodes1,i) = tree.thrs;
   model.gains(1:nNodes1,i) = tree.gains;
+  model.gainsInd(:,1:nNodes1,i) = tree.gainsInd;
   model.child(1:nNodes1,i) = tree.child;
   model.count(1:nNodes1,i) = tree.count;
   model.depth(1:nNodes1,i) = tree.depth;

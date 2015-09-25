@@ -12,20 +12,21 @@ typedef unsigned int uint32;
 // perform actual computation
 void forestFindThr( int N, int F, int L, const float *data,
   const float *offsets, const float *ws, const uint32 *order, const int split,
-  uint32 &fid, float &thr, double &gain )
+  uint32 &fid, float &thr, double &gain, float *indGains)
 {
 
   // define the parameters - mean and variance parameters
   const int nOutputs = L;
   int i, j, k, j1, j2;
   float *data1; uint32 *order1;
-  double y_ik, w_y_ik, w_yy_ik, wl, wr, w, vBst, vInit, v, vl, vr;
-  double *sum_left, *sum_right, *sum_root, *sq_sum_left, *sq_sum_right, *sq_sum_root;
+  double y_ik, w_y_ik, w_yy_ik, wl, wr, w, vBst, vInit, v;
+  double *sum_left, *sum_right, *sum_root, *sq_sum_left, *sq_sum_right, *sq_sum_root, *h, *vl, *vr;
   double *impurity_left, *impurity_right, *impurity_root;
 
   sum_left      = new double [nOutputs];   sum_right    = new double [nOutputs];   sum_root    = new double [nOutputs];
   sq_sum_left   = new double [nOutputs]; sq_sum_right   = new double [nOutputs]; sq_sum_root   = new double [nOutputs];
   impurity_left = new double [nOutputs]; impurity_right = new double [nOutputs]; impurity_root = new double [nOutputs];
+              h = new double [nOutputs];             vl = new double [nOutputs];            vr = new double [nOutputs];
 
   // perform initialization
   vBst = vInit = 0; w = 0; fid = 1; thr = 0;
@@ -71,20 +72,22 @@ void forestFindThr( int N, int F, int L, const float *data,
             sq_sum_right[k]-= w_yy_ik;
         }
 
-        wl+=ws[j1];wr-=ws[j1];v=0;vl=0;vr=0;
+        wl+=ws[j1];wr-=ws[j1];v=0;
 
         for ( k=0; k<nOutputs; k++){
             impurity_left[k]  = (sq_sum_left[k]  - sum_left[k]  * sum_left[k]  / wl) / wl;
             impurity_right[k] = (sq_sum_right[k] - sum_right[k] * sum_right[k] / wr) / wr;
-            vl += (impurity_left[k] /impurity_root[k]);
-            vr += (impurity_right[k]/impurity_root[k]);
+            vl[k] = (impurity_left[k] /impurity_root[k]) ;
+            vr[k] = (impurity_right[k]/impurity_root[k]) ;
+            h[k]  = (wl/w)*vl[k] + (wr/w)*vr[k];
+            v    += (h[k] / (double)nOutputs);
         }
-        vl /= (double)nOutputs;
-        vr /= (double)nOutputs;
-        v   = (wl/w)*vl + (wr/w)*vr;
 
         if( v<vBst && data1[j2]-data1[j1]>=1e-6f ) {
-          vBst=v; fid=i+1; thr=0.5f*(data1[j1]+data1[j2]);}
+          vBst=v; fid=i+1; thr=0.5f*(data1[j1]+data1[j2]);
+          for ( k=0; k<nOutputs; k++) indGains[k]=h[k];
+        }
+
     }
   }
 
@@ -92,14 +95,14 @@ void forestFindThr( int N, int F, int L, const float *data,
   delete [] sum_left;      delete [] sum_right;      delete [] sum_root;
   delete [] sq_sum_left;   delete [] sq_sum_right;   delete [] sq_sum_root;
   delete [] impurity_left; delete [] impurity_right; delete [] impurity_root;
-  gain = vInit-vBst;
-
+  delete [] h;             delete [] vr;             delete [] vl;
+  gain = vInit-vBst; for ( k=0; k<nOutputs; k++) indGains[k]=vInit-indGains[k];
 }
 
 
 // [fid,thr,gain] = mexFunction(data,offsets,ws,order,split);
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
-  int N, F, L, split; float *data, *offsets, *ws, thr;
+  int N, F, L, split; float *data, *offsets, *ws, thr, *indGains;
   double gain; uint32 *order, fid;
 
   data    = (float*) mxGetData(prhs[0]);
@@ -111,8 +114,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   N = (int) mxGetM(prhs[0]);
   F = (int) mxGetN(prhs[0]);
   L = (int) mxGetN(prhs[1]);
+  const int outDims[2] = {L,1};
 
-  forestFindThr(N,F,L,data,offsets,ws,order,split,fid,thr,gain);
+  plhs[3]  = mxCreateNumericArray(2,(const mwSize*)outDims,mxSINGLE_CLASS,mxREAL);
+  indGains = (float*) mxGetData(plhs[3]);
+
+  forestFindThr(N,F,L,data,offsets,ws,order,split,fid,thr,gain,indGains);
 
   plhs[0] = mxCreateDoubleScalar(fid);
   plhs[1] = mxCreateDoubleScalar(thr);

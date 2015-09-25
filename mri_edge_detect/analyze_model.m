@@ -5,7 +5,7 @@ colors=['-*b';'-*g';'-*r'];
 inv_colors=['-*r';'-*g';'-*b'];
 fprintf('Loading the model... \n');
 currentpath=pwd(); parsedpath=strsplit(currentpath,'/'); rootpath=strjoin(parsedpath(1:end-1),'/');
-addpath(rootpath); modelName=strcat(rootpath,'/models/forest/mymodel020_RS.mat');
+addpath(rootpath); modelName=strcat(rootpath,'/models/forest/mymodel_020_RS.mat');
 load(modelName); addpath(genpath(strcat(rootpath,'/toolbox')));
 fprintf('Model is loaded.\n');
 display(model.opts)
@@ -126,7 +126,35 @@ grid on; h_legend=legend('Stratification Node','Classification Node','Regression
 xlabel('Tree Depth'); ylabel('Average Information Gain');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% HOW MUCH AVERAGE GAIN IS OBTAINED FOR EACH INDIVIDUAL STRATIFICATION FOREST 
+nDepth        = min(max(model.depth));
+nSplitTypes   = model.opts.nPosePar;
+gainDist      = zeros(nDepth,nSplitTypes+1);
+
+for dId=1:nDepth
+  indices    = (model.depth==dId);
+  splitTypes = model.splitType(indices);
+  for sId=1:nSplitTypes
+    gainIndices       = model.gainsInd(sId,indices);
+    nodeIndices       = (splitTypes==1); 
+    gainDist(dId,sId) = sum(gainIndices(nodeIndices)) / numel(gainIndices(nodeIndices));  
+  end
+  gainIndices      = model.gains(indices);
+  nodeIndices      = (splitTypes==1);
+  gainDist(dId,end) = sum(gainIndices(nodeIndices)) / numel(gainIndices(nodeIndices));  
 end
+
+figure(6); 
+for sId=1:nSplitTypes+1, plot(1:nDepth,1-gainDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
+grid on; h_legend=legend('Rotation Part','Scale Part','Joint Stratification','Location','NorthWest'); set(h_legend,'FontSize',14);
+xlabel('Tree Depth'); ylabel('Average Entropy');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+end
+
+
 
 
 % --- leigs function for Laplacian eigenmap.

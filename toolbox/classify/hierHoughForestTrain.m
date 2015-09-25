@@ -133,7 +133,8 @@ fids     =zeros(K,1,'uint32');      gains=zeros(K,1,'single');
 meanOff  =zeros(K,L,'single');     covOff=zeros(K,L*L,'single');
 meanPose =zeros(K,P,'single');    covPose=zeros(K,P*P,'single');
 splitType=zeros(K,1,'uint8');       nType=false(K,3); 
-                                    tType=false(K,3);
+ gainsInd=zeros(K,P,'single');      tType=false(K,3);
+ 
 child=fids; count=fids; depth=fids; gainThr=1e-10;
 hsn=cell(K,1); dids=cell(K,1); dids{1}=uint32(1:N); k=1; K=2; 
 
@@ -152,9 +153,9 @@ while( k < K )
       distr(k,:)=histc(hs1,1:H)/n1; [~,hsn{k}]=max(distr(k,:)); end; end
       
   % random selection to choose split type  % (1)hierSplit, (2)classSplit, (3)regSplit
-  nType(k,1) = ~tType(k,1) && ~hierPure;
-  nType(k,2) = ~tType(k,2) && ~classPure;
-  nType(k,3) = ~tType(k,3) && ~regPure;
+  nType(k,1) = ~tType(k,1) && ~hierPure   && (nP(1)~=0.0);
+  nType(k,2) = ~tType(k,2) && ~classPure  && (nP(2)~=0.0);
+  nType(k,3) = ~tType(k,3) && ~regPure    && (nP(3)~=0.0);
   
   % if both classification and regression nodes are selected, then do a random choice
   if (nType(k,1)==true  && nType(k,2)==true  && nType(k,3)==false),rD=(rand(1)<=(nP(1)/(nP(1)+nP(2)))); if (rD), nType(k,2)=false; else nType(k,1)=false; end; end
@@ -181,7 +182,7 @@ while( k < K )
     
   % Perform the node split - search for fid and thr (first try with hier)
   if (nType(k,1))
-    [fid,thr,gain]=regForestFindThrJnt(data1,posepars1,dWts(dids1),order1,regSplit); nameType='hier'; tType(k,1)=true;
+    [fid,thr,gain,gainInd]=regForestFindThrJnt(data1,posepars1,dWts(dids1),order1,regSplit); nameType='hier'; tType(k,1)=true;
     count0=nnz(data(dids1,fids1(fid))<thr); if(gain<gainThr||count0<minChild||(n1-count0)<minChild), dids{k}=dids1; continue; else nType(K:K+1,1)=true; end;
   elseif (nType(k,2))
     [fid,thr,gain]=forestFindThr(data1,hs1,dWts(dids1),order1,H,split);nameType='classf'; tType(k,2)=true;
@@ -194,7 +195,7 @@ while( k < K )
   fid=fids1(fid); left=data(dids1,fid)<thr; count0=nnz(left);
   if( gain>=gainThr && count0>=minChild && (n1-count0)>=minChild )
     child(k)=K; fids(k)=fid-1; thrs(k)=thr;
-    gains(k)=gain; %https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/tree/_tree.pyx - line 3581
+    gains(k)=gain; if(nType(k,1)), gainsInd(k,:)=gainInd; end; %https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/tree/_tree.pyx - line 3581
     dids{K}=dids1(left); dids{K+1}=dids1(~left);
     splitType(k)=find(strcmpi(nameType,{'hier','classf','regr'}));
     depth(K:K+1)=depth(k)+1; K=K+2;
@@ -207,8 +208,8 @@ K=1:K-1; if(discr), hsn={hsn(K)}; else hsn=[hsn{K}]'; end
 dataInf.affMat=affMat; dataInf=rmfield(dataInf,'data2Img');
 tree=struct('fids',fids(K),'thrs',thrs(K),'child',child(K),...
             'distr',distr(K,:),'hs',hsn,'count',count(K),'depth',depth(K),...
-            'gains',gains(K), 'meanOff',meanOff(K,:)', 'covOff',covOff(K,:)', ...
-            'splitType',splitType(K), 'meanPose',meanPose(K,:)', ... 
+            'gains',gains(K), 'gainsInd',gainsInd(K,:)', 'meanOff',meanOff(K,:)',...
+            'covOff',covOff(K,:)', 'splitType',splitType(K), 'meanPose',meanPose(K,:)', ... 
             'covPose',covPose(K,:)', 'dataInf',dataInf );
  
 end

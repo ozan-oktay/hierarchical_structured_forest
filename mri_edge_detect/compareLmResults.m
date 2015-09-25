@@ -4,8 +4,8 @@ function compareLmResults()
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 restoredefaultpath;
-rotationMatFile = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mribiobankdata/dofs/patientParam.mat';
-firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mribiobankdata/results/distances_mymodel020_RS_L1SIX.txt';
+rotationMatFile = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/dofs/patientParam.mat';
+firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/distances_mymodel000_RS.txt';
 workdirectory   = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
 addpath(genpath(horzcat(workdirectory,'/toolbox')));
   
