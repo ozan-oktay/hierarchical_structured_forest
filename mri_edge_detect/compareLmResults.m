@@ -4,8 +4,8 @@ function compareLmResults()
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 restoredefaultpath;
-patientMatFile = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mribiobankdata/dofs/patientParam.mat';
-firstTxtFile   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mribiobankdata/results/distances_master_forest.txt';
+patientMatFile = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/dofs/patientParam.mat';
+firstTxtFile   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/distances_master_forest_NDATA.txt';
 workdirectory  = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
 addpath(genpath(horzcat(workdirectory,'/toolbox')));
   
@@ -72,7 +72,7 @@ end;
 figure(2); 
 for ind=1:nLandmarks, subplot(2,3,ind);   
   plot(scales,errorsLm(:,ind),'*b'); [RHO,PVAL] = corr(scales,errorsLm(:,ind),'type','Pearson'); rangeY=[0:0.1:35]; rangeX=[min(scales),max(scales)];
-  meanY=mean(errorsLm(:,ind)); stdY=std(errorsLm(:,ind)); maxX=max(scales); pdfY=normpdf(rangeY,meanY,stdY); hold on; plot(maxX-300*pdfY,rangeY,'-r','Linewidth',3); plot(maxX-300*max(pdfY),meanY,'*r','Linewidth',7); hold off;
+  meanY=mean(errorsLm(:,ind)); stdY=std(errorsLm(:,ind)); maxX=max(scales); pdfY=normpdf(rangeY,meanY,stdY); hold on; plot(maxX-3*pdfY,rangeY,'-r','Linewidth',3); plot(maxX-3*max(pdfY),meanY,'*r','Linewidth',7); hold off;
   title(sprintf('rho %f, pval %f',RHO,PVAL)); grid on; ylabel('Landmark Errors in mm'); xlabel('Rotation around the z-axis in degrees'); ylim([rangeY(1) rangeY(end)]); xlim([rangeX(1) rangeX(2)])
 end;
 

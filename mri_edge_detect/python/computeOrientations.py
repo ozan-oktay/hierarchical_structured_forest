@@ -7,6 +7,7 @@ import irtk
 import scipy.io
 import argparse
 import numpy as np
+import tempfile as tp
 
 # Function call
 def callmyfunction(mycmd):
@@ -46,7 +47,9 @@ dofoutnames   = sorted(dofoutnames)
 filenames     = sorted(filenames)
 
 for mov_landmark,dofoutname in zip(mov_landmarks,dofoutnames):
-    callmyfunction('pareg {0} {1} -dofout {2}'.format(ref_landmark,mov_landmark,dofoutname))
+    tmpdof = tp.NamedTemporaryFile(delete=True,suffix='.dof.gz')
+    callmyfunction('prreg {0} {1} -dofout {2}'.format(ref_landmark,mov_landmark,tmpdof.name))
+    callmyfunction('pareg {0} {1} -dofout {2} -dofin {3} -p9'.format(ref_landmark,mov_landmark,dofoutname,tmpdof.name))
     dofparams=irtk.AffineTransformation(filename=dofoutname)
 
     print dofparams

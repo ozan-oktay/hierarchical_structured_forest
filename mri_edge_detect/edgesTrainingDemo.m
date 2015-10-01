@@ -1,11 +1,11 @@
 %% Demo for Structured Edge Detector (please see readme.txt first) %%%%
 %%%% add the path
-function edgesTrainingDemo(nodeProb,modelName)
+function edgesTrainingDemo(modelName)
 
 restoredefaultpath;setenv('LD_LIBRARY_PATH','');
 currentpath=pwd(); parsedpath=strsplit(currentpath,'/'); rootpath=strjoin(parsedpath(1:end-1),'/');
 addpath(rootpath); addpath(genpath(strcat(rootpath,'/toolbox')));
-compileMex();  
+%compileMex();  
 
 %%%% set opts for training (see edgesTrain_3D.m) %%%%
    opts.imWidth= 28;                    % [28]  width of image patches    
@@ -39,12 +39,12 @@ opts.nTreesEval= 8;                     % [10]  number of trees to evaluate per 
  opts.useParfor= 1;                     % [0]   if true train trees in parallel (memory intensive)
   opts.modelDir= 'models/';             % ['models/'] target directory for storing models
   opts.modelFnm= modelName;             % ['ctmodel'] model filename
-  opts.imageDir= 'mritrainingdata_sec/';% ['mritrainingdata_sec/'] location of image dataset     
+  opts.imageDir= 'mritrainingdata/';    % ['mritrainingdata_sec/'] location of image dataset     
   opts.ctmaxval= 1024;                  % [1024] maximum allowed intensity value - for linear scaling. 
   
 opts.nLandmarks= 6;                     % [false] if true train trees with both classification and regression nodes
   opts.regSplit= 'mse';                 % ['mse'] regression criterion
-  opts.nodeProb= nodeProb;              % probability of selecting a regression split in training
+  opts.nodeProb= [0.2,0.4,0.4];         % probability of selecting a regression split in training
    opts.stageId= 1;                     % Framework stage identifier - the zeroth level extracts pems/landmarks - the first level outputs also pose/scale in addition 
   opts.shpWidth= 100;                   % Width of the window for PEM Shape features
   opts.shpDepth= 20;                    % Depth of the window for PEM Shape features     

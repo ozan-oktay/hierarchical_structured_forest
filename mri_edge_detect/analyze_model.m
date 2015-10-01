@@ -5,20 +5,22 @@ colors=['-*b';'-*g';'-*r'];
 inv_colors=['-*r';'-*g';'-*b'];
 fprintf('Loading the model... \n');
 currentpath=pwd(); parsedpath=strsplit(currentpath,'/'); rootpath=strjoin(parsedpath(1:end-1),'/');
-addpath(rootpath); modelName=strcat(rootpath,'/models/forest/mymodel_020_RS.mat');
+addpath(rootpath); modelName=strcat(rootpath,'/models/forest/master_forest_NDATA.mat');
 load(modelName); addpath(genpath(strcat(rootpath,'/toolbox')));
 fprintf('Model is loaded.\n');
-display(model.opts)
+display(model.opts);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DISPLAY THE PROXIMITY MAP OF TRAINING IMAGES
 if (~isempty(model.dataInf{1}.affMat))
 
-  nTrees   = model.opts.nTrees;
+  % Build the affinity matrix  
+  nTrees = model.opts.nTrees;
   for ii=2:nTrees, model.dataInf{1}.affMat=model.dataInf{1}.affMat+model.dataInf{ii}.affMat;end
+
   affMat   = model.dataInf{1}.affMat / nTrees;
   nImgs    = size(affMat,1); 
-  rotmat   = strcat(rootpath,'/mritrainingdata_sec/dofs/patientParam.mat'); load(rotmat,'filename','z_rot','scale'); 
+  rotmat   = strcat(rootpath,'/mritrainingdata_sec_large/dofs/patientParam.mat'); load(rotmat,'filename','z_rot','scale'); 
   filename = cellstr(filename); %#ok<NODEF>
   rotval   = cell(nImgs,1);
   scaleval = cell(nImgs,1);
@@ -33,10 +35,12 @@ if (~isempty(model.dataInf{1}.affMat))
   scaleval = squeeze(cell2array(scaleval)); scaleval = (scaleval-min(scaleval)+1) * (100/(max(scaleval)-min(scaleval)+1));
   affMat   = 1./(affMat+1e-15); affMat(eye(nImgs)>0)=0.0;             
   [Y,E]    = leigs(affMat, 10, 3);
+  
+  %%%% Plot The affinities %%%%
   figure(1);
   scatter(Y(:,1),Y(:,2),scaleval,rotval,'filled');colormap('jet'); colorbar; grid on;
   xlabel('Dimension 1'); ylabel('Dimension 2'); title('Proximity Plot of Images VS Rotation Info');
-  
+
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
