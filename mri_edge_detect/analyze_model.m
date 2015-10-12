@@ -5,7 +5,7 @@ colors=['-*b';'-*g';'-*r'];
 inv_colors=['-*r';'-*g';'-*b'];
 fprintf('Loading the model... \n');
 currentpath=pwd(); parsedpath=strsplit(currentpath,'/'); rootpath=strjoin(parsedpath(1:end-1),'/');
-addpath(rootpath); modelName=strcat(rootpath,'/models/forest/master_forest_NDATA.mat');
+addpath(rootpath); modelName=strcat(rootpath,'/models/forest/myforest_olddata.mat');
 load(modelName); addpath(genpath(strcat(rootpath,'/toolbox')));
 fprintf('Model is loaded.\n');
 display(model.opts);
@@ -20,7 +20,7 @@ if (~isempty(model.dataInf{1}.affMat))
 
   affMat   = model.dataInf{1}.affMat / nTrees;
   nImgs    = size(affMat,1); 
-  rotmat   = strcat(rootpath,'/mritrainingdata_sec_large/dofs/patientParam.mat'); load(rotmat,'filename','z_rot','scale'); 
+  rotmat   = strcat(rootpath,'/',model.opts.imageDir,'dofs/patientParam.mat'); load(rotmat,'filename','z_rot','scale'); 
   filename = cellstr(filename); %#ok<NODEF>
   rotval   = cell(nImgs,1);
   scaleval = cell(nImgs,1);
@@ -32,15 +32,22 @@ if (~isempty(model.dataInf{1}.affMat))
 
   %%%%%%%% CONVERT IT TO A DISSIMILARITY MATRIX %%%%%%%%
   rotval   = squeeze(cell2array(rotval));
-  scaleval = squeeze(cell2array(scaleval)); scaleval = (scaleval-min(scaleval)+1) * (100/(max(scaleval)-min(scaleval)+1));
+  scaleval = squeeze(cell2array(scaleval)); 
   affMat   = 1./(affMat+1e-15); affMat(eye(nImgs)>0)=0.0;             
-  [Y,E]    = leigs(affMat, 10, 3);
+  [Y,E]    = leigs(affMat, 25, 3); display(sprintf('eigenvalues are: %f ',diag(E)));
   
   %%%% Plot The affinities %%%%
   figure(1);
-  scatter(Y(:,1),Y(:,2),scaleval,rotval,'filled');colormap('jet'); colorbar; grid on;
+  scatter(Y(:,1),Y(:,2),50,rotval,'filled');colormap('jet'); colorbar; grid on;
   xlabel('Dimension 1'); ylabel('Dimension 2'); title('Proximity Plot of Images VS Rotation Info');
-
+  
+  figure(7);
+  scatter(Y(:,1),Y(:,3),50,scaleval,'filled');colormap('jet'); colorbar; grid on;
+  xlabel('Dimension 1'); ylabel('Dimension 3'); title('Proximity Plot of Images VS Scale Info');
+  
+  figure(8);
+  scatter(Y(:,2),Y(:,3),50,scaleval,'filled');colormap('jet'); colorbar; grid on;
+  xlabel('Dimension 2'); ylabel('Dimension 3'); title('Proximity Plot of Images VS Scale Info');
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -69,6 +76,7 @@ xlabel('Tree Depth'); ylabel('Perc of Nodes');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DISPLAY THE USAGE OF FEATURE TYPES VS TREE DEPTH
+%{
 nChnFtrs      = model.opts.nChnFtrs;
 nSimFtrs      = model.opts.nSimFtrs;
 nShpFtrs      = model.opts.nShpFtrs;
@@ -90,6 +98,7 @@ figure(3);
 for sId=1:nFeatureTypes, plot(1:nDepth,fidDist(:,sId),inv_colors(sId,:),'LineWidth',2); hold on; end
 grid on; h_legend=legend('Channel Features','SelfSimilarity Features','Shape Features','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Perc of Nodes');
+%}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -110,6 +119,7 @@ figure(4); plot(1:nDepth,nodeDist(:,1),colors(1,:),'LineWidth',2); hold on;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DISPLAY HOW MUCH AVERAGE GAIN IS OBTAINED FOR EACH SPLIT TYPE
+%{
 nDepth        = min(max(model.depth));
 nSplitTypes   = max(max(model.splitType));
 gainDist      = zeros(nDepth,nSplitTypes);
@@ -128,6 +138,7 @@ figure(5);
 for sId=1:nSplitTypes, plot(1:nDepth,gainDist(:,sId),colors(sId,:),'LineWidth',2); hold on; end
 grid on; h_legend=legend('Stratification Node','Classification Node','Regression Node','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Average Information Gain');
+%}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
