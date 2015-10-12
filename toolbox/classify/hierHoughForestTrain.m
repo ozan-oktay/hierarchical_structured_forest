@@ -171,9 +171,9 @@ while( k < K )
     
   % split specific parameters
   assert( numel(nType(k,nType(k,:)))==1 );
-  if     (nType(k,1)), fWts1=ones(1,numel(fWts),'single')/numel(fWts); F1=FR; 
-  elseif (nType(k,2)), fWts1=fWts;                                     F1=FC; 
-  elseif (nType(k,3)), fWts1=fWts;                                     F1=FR;
+  if     (nType(k,1)), fWts1=single(~fWts); fWts1=fWts1/sum(fWts1); F1=round(nnz(fWts1)/3); 
+  elseif (nType(k,2)), fWts1=fWts;                                  F1=round(sqrt(nnz(fWts1)));
+  elseif (nType(k,3)), fWts1=fWts;                                  F1=round(nnz(fWts1)/3);
   end;
     
   % train split (weak classifier) 
