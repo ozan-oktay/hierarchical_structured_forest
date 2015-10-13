@@ -18,7 +18,7 @@ def createFolder(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def evalPose(groundtruthPoseFile,generatedPoseFile,poseErrorTxt):
+def evalPose(imagename,groundtruthPoseFile,generatedPoseFile,poseErrorTxt):
   import irtk
   import re
 
@@ -37,7 +37,15 @@ def evalPose(groundtruthPoseFile,generatedPoseFile,poseErrorTxt):
 
   # Write the values
   with open(poseErrorTxt, "a") as myfile:
-    myfile.write('file: {0} grnd: {1} {2} cmpt: {3} {4} conf(std): {5} {6}\n'.format(inputimages[ind],grndRot,grndScale,computedMean[0],computedMean[1],computedStd[0],computedStd[1]))
+    myfile.write('file: {0} '.format(imagename))
+    myfile.write('grnd: {0} {1} '.format(grndRot,grndScale))
+    myfile.write('cmpt: ')
+    for mean in computedMean:
+      myfile.write('{0} '.format(mean))
+    myfile.write('conf(std): ')
+    for std in computedStd:
+      myfile.write('{0} '.format(std))
+    myfile.write('\n')
     myfile.close()
 
 # Base Parameter List - Landmark Locations
@@ -48,9 +56,9 @@ slurm_queue    = 'short'
 slurm_logname  = '/vol/bitbucket/oo2113/tmp/logfile.out'
 base_dir       = '/vol/biomedic/users/oo2113/str_hier_forest_mri'
 source_dir     = base_dir + '/mri_edge_detect'
-testdata_dir   = base_dir + '/mritestingdata'
-modelname      = 'master_forest_NDATA'
-n_atlases      = 10
+testdata_dir   = base_dir + '/mribiobankdata'
+modelname      = 'myforest_ndata'
+n_atlases      = 5
 
 input_img_dir    = testdata_dir + '/images'
 ground_lm_dir    = testdata_dir + '/landmarks'
@@ -110,7 +118,7 @@ for ind in range(numSubjects):
         tempdof2  = tp.NamedTemporaryFile(delete = True,suffix='.dof.gz'); cmd_eval += ' /vol/medic02/users/oo2113/Build/irtk/bin/prreg {0} {1} -dofout {2};'.format(atlas_dir+'/Atlas{0:02d}/landmarks.vtk'.format(ind2),groundtruthLandmarks[ind],tempdof2.name)
         cmd_eval  += ' /vol/medic02/users/oo2113/Build/irtk_master/bin/revaluation {0} {1} {2} -output {3} -vtk {4};'.format(groundtruthLabels[ind],tempdof1.name,tempdof2.name,rigidRegErrorTxtFile,groundtruthLandmarks[ind])
     os.system(cmd_eval)
-    #if os.path.exists(generatedPoseFiles[ind]): evalPose(groundtruthPoseFiles[ind],generatedPoseFiles[ind],poseErrorTxtFile)
+    if os.path.exists(generatedPoseFiles[ind]): evalPose(groundtruthLabels[ind],groundtruthPoseFiles[ind],generatedPoseFiles[ind],poseErrorTxtFile)
 
   else:
 
