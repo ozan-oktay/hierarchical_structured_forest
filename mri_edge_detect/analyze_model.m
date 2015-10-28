@@ -5,7 +5,7 @@ colors=['-*b';'-*g';'-*r'];
 inv_colors=['-*r';'-*g';'-*b'];
 fprintf('Loading the model... \n');
 currentpath=pwd(); parsedpath=strsplit(currentpath,'/'); rootpath=strjoin(parsedpath(1:end-1),'/');
-addpath(rootpath); modelName=strcat(rootpath,'/models/forest/myforest_olddata.mat');
+addpath(rootpath); modelName=strcat(rootpath,'/models/forest/prn000.mat');
 load(modelName); addpath(genpath(strcat(rootpath,'/toolbox')));
 fprintf('Model is loaded.\n');
 display(model.opts);
@@ -34,24 +34,24 @@ if (~isempty(model.dataInf{1}.affMat))
   rotval   = squeeze(cell2array(rotval));
   scaleval = squeeze(cell2array(scaleval)); 
   affMat   = 1./(affMat+1e-15); affMat(eye(nImgs)>0)=0.0;             
-  [Y,E]    = leigs(affMat, 25, 3); display(sprintf('eigenvalues are: %f ',diag(E)));
+  [Y,E]    = leigs(affMat, 30, 3); display(sprintf('eigenvalues are: %f ',diag(E)));
   
   %%%% Plot The affinities %%%%
   figure(1);
   scatter(Y(:,1),Y(:,2),50,rotval,'filled');colormap('jet'); colorbar; grid on;
-  xlabel('Dimension 1'); ylabel('Dimension 2'); title('Proximity Plot of Images VS Rotation Info');
+  xlabel('Dimension 1'); ylabel('Dimension 2'); title('Proximity plot of training images vs rotation info');
   
   figure(7);
   scatter(Y(:,1),Y(:,3),50,scaleval,'filled');colormap('jet'); colorbar; grid on;
-  xlabel('Dimension 1'); ylabel('Dimension 3'); title('Proximity Plot of Images VS Scale Info');
+  xlabel('Dimension 1'); ylabel('Dimension 3'); title('Proximity plot of training images vs scale info');
   
   figure(8);
   scatter(Y(:,2),Y(:,3),50,scaleval,'filled');colormap('jet'); colorbar; grid on;
-  xlabel('Dimension 2'); ylabel('Dimension 3'); title('Proximity Plot of Images VS Scale Info');
+  xlabel('Dimension 2'); ylabel('Dimension 3'); title('Proximity plot of training images vs scale info');
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%{
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DISPLAY THE DISTRIBUTION OF SPLIT TYPES VS TREE DEPTH
@@ -166,7 +166,7 @@ for sId=1:nSplitTypes+1, plot(1:nDepth,1-gainDist(:,sId),colors(sId,:),'LineWidt
 grid on; h_legend=legend('Rotation Part','Scale Part','Joint Stratification','Location','NorthWest'); set(h_legend,'FontSize',14);
 xlabel('Tree Depth'); ylabel('Average Entropy');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%}
 end
 
 

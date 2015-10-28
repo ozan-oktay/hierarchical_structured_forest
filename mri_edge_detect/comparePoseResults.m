@@ -2,7 +2,7 @@ function comparePoseResults()
 %COMPARERESULTS Summary of this function goes here
 %   Detailed explanation goes here
 
-firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdata/results/poseEstimations_master_forest.txt';
+firstTxtFile    = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mribiobankdata/results/poseEstimations_prn016.txt';
 workdirectory   = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
 addpath(genpath(horzcat(workdirectory,'/toolbox')));
 addpath(genpath('/homes/oo2113/workspace/matlab/plotTools/violin'));
