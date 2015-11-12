@@ -35,15 +35,15 @@ def get_filepaths(directory,strendswith=''):
     return file_paths  # Self-explanatory.
 
 # Algorithm Parameters
-firstClassifier = 'mriFirst_hier'
-secondClassifier= 'mriSecond_hier_E4'
+firstClassifier = 'myforest_firstStage'
+secondClassifier= 'prn016'
 slurm_ncores    = 8
 slurm_nthreads  = 1
 slurm_memory    = 25
-slurm_queue     = 'short'
+slurm_queue     = 'interactive'
 
 # Directories
-target_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/segmentation/targets'
+target_dir   = '/vol/medic02/users/oo2113/cmr_ma/targets_fullauto'
 source_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect'
 inputimages  = get_filepaths(target_dir,'cine_sax_ED.nii.gz')
 
@@ -53,7 +53,7 @@ for inputimage in inputimages:
     pemOut2   = os.path.dirname(inputimage) + '/pems2'; createFolder(pemOut2)
 
     if not os.path.exists(pemOut2+'/cine_sax_ED_pem.nii.gz'):
-        cmd_pem1  = '/usr/lib/matlab/R2014a/bin/matlab -nodesktop -nosplash -r \\"cd(\'{0}\'); addpath(\'{0}\'); edgesTestingDemo(\'{1}\',\'{2}\',\'{3}\'); quit;\\"'.format(source_dir,firstClassifier, inputimage,pemOut1)
-        cmd_pem2  = '/usr/lib/matlab/R2014a/bin/matlab -nodesktop -nosplash -r \\"cd(\'{0}\'); addpath(\'{0}\'); edgesTestingDemo(\'{1}\',\'{2}\',\'{3}\'); quit;\\"'.format(source_dir,secondClassifier,inputimage,pemOut2)
+        cmd_pem1  = '/usr/lib/matlab/R2015a/bin/matlab -nodesktop -nosplash -r \\"cd(\'{0}\'); addpath(\'{0}\'); edgesTestingDemo(\'{1}\',\'{2}\',\'{3}\'); quit;\\"'.format(source_dir,firstClassifier, inputimage,pemOut1)
+        cmd_pem2  = '/usr/lib/matlab/R2015a/bin/matlab -nodesktop -nosplash -r \\"cd(\'{0}\'); addpath(\'{0}\'); edgesTestingDemo(\'{1}\',\'{2}\',\'{3}\'); quit;\\"'.format(source_dir,secondClassifier,inputimage,pemOut2)
         cmd_slurm = cmd_pem1+'; '+cmd_pem2
         sbatch(cmd_slurm, mem=slurm_memory, n=slurm_nthreads, c=slurm_ncores, queue=slurm_queue, verbose=True, dryrun=False)

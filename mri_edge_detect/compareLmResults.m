@@ -5,8 +5,8 @@ function compareLmResults()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 restoredefaultpath;
 workdirectory  = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
-patientMatFile = strcat(workdirectory,'/mritestingdata/dofs/patientParam.mat');
-firstTxtFile   = strcat(workdirectory,'/mritestingdata/results/distances_prn016.txt');
+patientMatFile = strcat(workdirectory,'/mristacomdata/dofs/patientParam.mat');
+firstTxtFile   = strcat(workdirectory,'/mristacomdata/results/distances_prn016.txt');
 addpath(genpath(horzcat(workdirectory,'/toolbox')));
   
 firstFileID  = fopen(firstTxtFile, 'r');
@@ -47,7 +47,8 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % convert the cell struct to an array
-errorsLm = squeeze(cell2array(errorsLm));
+errorsLm        = squeeze(cell2array(errorsLm)) - 1;
+[XY_set,XZ_set] = computeErrorsInPlane(errorsLm,nLandmarks);
 
 fprintf ('*/*/*/*/*/ Final Results /*/*/*/*/*/ \n');
 fprintf (sprintf('\n*/*/*/* total number of matched images: %d */*/*/*\n',size(errorsLm,1)));
@@ -58,6 +59,8 @@ end
 fprintf (sprintf('*/*/*/ Landmark C: mean: %6.3f std: %6.3f median: %6.3f \n',mean(errorsLm(:,nLandmarks+1)),std(errorsLm(:,nLandmarks+1)),median(errorsLm(:,nLandmarks+1))));
 fprintf ('================================================================\n');
 fprintf (sprintf('*/*/*/ Landmark A: mean: %6.3f std: %6.3f median: %6.3f \n',mean(mean(errorsLm(:,1:nLandmarks))),mean(std(errorsLm(:,1:nLandmarks))),mean(median(errorsLm(:,1:nLandmarks)))));
+fprintf (sprintf('*/*/*/ Landmark A: mean: %6.3f std: %6.3f median: %6.3f (XY)\n',XY_set(1),XY_set(2),XY_set(3)));
+fprintf (sprintf('*/*/*/ Landmark A: mean: %6.3f std: %6.3f median: %6.3f (XZ)\n',XZ_set(1),XZ_set(2),XZ_set(3)));
 fprintf ('\n');
 fclose(firstFileID);
 
@@ -110,5 +113,27 @@ end
 
 function outstr = remSpace(str)
 outstr= str(~isspace(str));
+end
+
+function [XY_set,XZ_set]=computeErrorsInPlane(errorsLm,nLandmarks)
+
+XY_set  = zeros(3);
+XZ_set  = zeros(3);
+
+Xerrors = errorsLm(:,nLandmarks+1 + (1:3:nLandmarks*3) );
+Yerrors = errorsLm(:,nLandmarks+1 + (2:3:nLandmarks*3) );
+Zerrors = errorsLm(:,nLandmarks+1 + (3:3:nLandmarks*3) );
+
+XYerrors = sqrt(Xerrors.^2 + Yerrors.^2);
+XZerrors = sqrt(Xerrors.^2 + Zerrors.^2);
+
+XY_set(1) = mean(mean(XYerrors));
+XY_set(2) = mean(std(XYerrors));
+XY_set(3) = mean(median(XYerrors));
+
+XZ_set(1) = mean(mean(XZerrors));
+XZ_set(2) = mean(std(XZerrors));
+XZ_set(3) = mean(median(XZerrors));
+
 end
 

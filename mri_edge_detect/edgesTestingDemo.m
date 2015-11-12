@@ -22,7 +22,7 @@ function edgesTestingDemo (modelname,imagename,savedir)
   otherFtrs               = struct('pem',[], 'vtk',[]);     % pem image name - required for hier forest
   opts.pixel_type         = 'uint16';         % output image pixel type
   opts.pixel_spacing      = [1.25,1.25,2.00]; % intensity and pem pixel spacing in world coordinates
-  opts.referenceimagename = horzcat(workdirectory,'/',model.opts.imageDir,'reference/ref_image.nii.gz');
+  opts.referenceimagename = horzcat(workdirectory,'/',model.opts.imageDir,'/reference/ref_image.nii.gz');
   opts.imagename          = horzcat(workdirectory,'/mritestingdata/images/14DA01414_ed0_3D.nii.gz');
   opts.savedir            = horzcat(workdirectory,'/tmp');  
 
@@ -40,7 +40,7 @@ function edgesTestingDemo (modelname,imagename,savedir)
     tmp1              = strsplit(opts.savedir,'/');    
     opts.pemimagename = strcat(strjoin(tmp1(1:end-1),'/'),'/pems/',opts.patname,'_pem.nii.gz');
     opts.vtkname      = strcat(strjoin(tmp1(1:end-1),'/'),'/pems/',opts.patname,'_lm.vtk');
-    otherFtrs.pem     = load_untouch_nii(opts.pemimagename); assert(all((otherFtrs.pem.hdr.dime.pixdim(2:4)-[1.25,1.25,2.00])<1e-4)); otherFtrs.pem = otherFtrs.pem.img; 
+    otherFtrs.pem     = load_untouch_nii(opts.pemimagename); assert(all(abs(otherFtrs.pem.hdr.dime.pixdim(2:4)-opts.pixel_spacing)<1e-4)); otherFtrs.pem = otherFtrs.pem.img; 
     otherFtrs.w2i     = world2ImageMat  (opts.pemimagename);
     otherFtrs.vtk     = vtk2Mat         (opts.vtkname);
   end 
@@ -69,11 +69,12 @@ function edgesTestingDemo (modelname,imagename,savedir)
   tstart=tic; houghVotes2Vtk (HV,vtkParams); fprintf (sprintf('time lm extraction: %f sec\n',toc(tstart)));
   
   % save the pose values 
-  fileID = fopen(opts.posetxtsavename,'w');
-  fprintf(fileID,'mean val: %3.3f %3.3f\n',pVal(1),pVal(3));
-  fprintf(fileID,'std val: %3.3f %3.3f\n' ,sqrt(pVal(2)),sqrt(pVal(4)));
-  fclose(fileID);
-    
+  if (model.opts.stageId == 1)
+      fileID = fopen(opts.posetxtsavename,'w');
+      fprintf(fileID,'mean val: %3.3f %3.3f\n',pVal(1),pVal(3));
+      fprintf(fileID,'std val: %3.3f %3.3f\n' ,sqrt(pVal(2)),sqrt(pVal(4)));
+      fclose(fileID);
+  end
 end
 
 %% Preprocessing function for the input images / The same procedure is
@@ -82,7 +83,7 @@ function funPreprocessing (op)
 
 %%%% Resample to fixed isotropic resolution 
 binaryresample  ='irtk_binaries/linux/resample';
-system(sprintf('%s %s %s -size %f ',binaryresample,op.imagename,op.tmpimagename, op.pixel_spacing)); 
+system(sprintf('%s %s %s -linear -size %f %f %f',binaryresample,op.imagename,op.tmpimagename, op.pixel_spacing(1), op.pixel_spacing(2), op.pixel_spacing(3))); 
 
 %%%% Histogram Normalization ( not for CT images - other modalities )
 binarynormalize ='irtk_binaries/linux/normalize';

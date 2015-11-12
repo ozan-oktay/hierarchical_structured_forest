@@ -56,8 +56,8 @@ slurm_queue    = 'short'
 slurm_logname  = '/vol/bitbucket/oo2113/tmp/logfile.out'
 base_dir       = '/vol/biomedic/users/oo2113/str_hier_forest_mri'
 source_dir     = base_dir + '/mri_edge_detect'
-testdata_dir   = base_dir + '/mritestingdata'
-modelname      = 'cl000'
+testdata_dir   = base_dir + '/mristacomdata'
+modelname      = 'myforest_firstStage'
 n_atlases      = 3
 
 input_img_dir    = testdata_dir + '/images'
