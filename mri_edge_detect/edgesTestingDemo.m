@@ -55,7 +55,6 @@ function edgesTestingDemo (modelname,imagename,savedir)
   Imgstr.hdr.dime.datatype = int16(4);
   Imgstr.img = cast(1024 * outputImage, opts.pixel_type);
   save_untouch_nii(Imgstr,opts.pemsavename);
-  delete(opts.tmpimagename);
 
   %%%% save the hough votes %%%%
   Imgstr.hdr.dime.datatype = int16(16);
@@ -65,9 +64,10 @@ function edgesTestingDemo (modelname,imagename,savedir)
   save_untouch_nii(Imgstr,opts.houghimagesavename);
   
   %%%% find the landmark locations from the hough vote maps 
-  vtkParams=struct( 'method','max', 'savename',opts.vtksavename, 'refimagename',opts.imagename, 'spacing',Imgstr.hdr.dime.pixdim(2:4) );
+  vtkParams=struct( 'method','max', 'savename',opts.vtksavename, 'refimagename',opts.tmpimagename, 'spacing',Imgstr.hdr.dime.pixdim(2:4) );
   tstart=tic; houghVotes2Vtk (HV,vtkParams); fprintf (sprintf('time lm extraction: %f sec\n',toc(tstart)));
-  
+  delete(opts.tmpimagename);
+
   % save the pose values 
   if (model.opts.stageId == 1)
       fileID = fopen(opts.posetxtsavename,'w');
