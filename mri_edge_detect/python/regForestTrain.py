@@ -7,6 +7,7 @@ import numpy as np
 import SimpleITK as sitk
 import vtk
 import scipy
+import itertools
 
 def vtk_point_read(filename):
     # load a vtk file as input
@@ -18,23 +19,29 @@ def vtk_point_read(filename):
     for i in range(data.GetNumberOfPoints()):
         x, y, z = data.GetPoint(i)
         points.append([x,y,z])
-    points = np.array(points)
+    points = np.array(points,dtype=np.float64)
     return points
 
+def comb2(n, k):
+    from math import factorial
+    return factorial(n) / factorial(k) / factorial(n - k)
+
 # TRAINING PEM DIRECTORY
-trainingImgDir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdatalarge/images'
-trainingPemDir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdatalarge/pems_hough_votes_max'
-trainingDofDir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritestingdatalarge/dofs'
+trainingImgDir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritrainingdata_sec/images'
+trainingPemDir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritrainingdata_sec/pems'
+trainingDofDir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mritrainingdata_sec/dofs'
 trainingPemNames = []
 trainingDofNames = []
 trainingVtkNames = []
 trainingImgNames = []
 
 # TRAINING PARAMETERS
-numAllSamples      = np.array([900])
-numTrainingSamples = np.array([850])
-inputSampleSize    = np.array([48,48,8])
+numAllSamples      = np.array([670])
+numTrainingSamples = np.array([600])
+inputSampleSize    = np.array([50,50,8])
 downsampleSize     = 2
+smoothWidth        = 1
+numLandmarks       = 6
 
 # INPUT TRAINING PEM IMAGES
 for root,dirs,files in os.walk(trainingPemDir):
@@ -65,29 +72,36 @@ assert ( len(trainingPemNames) == len(trainingDofNames) )
 assert ( len(trainingPemNames) == len(trainingVtkNames) )
 assert ( len(trainingPemNames) == len(trainingImgNames) )
 for trainingPemName,trainingDofName,trainingVtkName,trainingImgName in zip(trainingPemNames,trainingDofNames,trainingVtkNames,trainingImgNames):
-    assert( trainingPemName.split('/')[-1].split('.')[0] == trainingDofName.split('/')[-1].split('.')[0] )
-    assert( trainingPemName.split('/')[-1].split('.')[0] == trainingImgName.split('/')[-1].split('.')[0] )
-    assert( trainingPemName.split('/')[-1].split('.')[0] == trainingVtkName.split('/')[-1].split('.')[0].split('_lm')[0] )
+    assert( trainingPemName.split('/')[-1].split('_pem.')[0] == trainingDofName.split('/')[-1].split('.')[0] )
+    assert( trainingPemName.split('/')[-1].split('_pem.')[0] == trainingImgName.split('/')[-1].split('.')[0] )
+    assert( trainingPemName.split('/')[-1].split('_pem.')[0] == trainingVtkName.split('/')[-1].split('.')[0].split('_lm')[0] )
 
-numAllSamples = np.min([numAllSamples,len(trainingPemNames)])
-numFeatures   = 2*inputSampleSize[0]*inputSampleSize[1]*inputSampleSize[2]
+numAllSamples  = np.min([numAllSamples,len(trainingPemNames)])
+numPemFeatures = inputSampleSize[0]*inputSampleSize[1]*inputSampleSize[2]
+numLMFeatures  = comb2(numLandmarks, 2) + comb2(comb2(numLandmarks, 2),2)
+numFeatures    = numLMFeatures + numPemFeatures
+
 collectedLabels = np.zeros([numAllSamples],dtype=float)
-collectedPems   = np.zeros([numAllSamples,numFeatures],dtype=float)
+collectedFtrs   = np.zeros([numAllSamples,numFeatures],dtype=float)
 
 # READ THE DOF FILES AND STORE GROUND TRUTH INFORMATION
 for index in range(numAllSamples):
 
     dofname   = trainingDofNames[index]
     dofparams = irtk.AffineTransformation(filename=dofname)
+    scale     = np.power(np.linalg.det(dofparams.matrix()),1.0/3.0)
+
+    #collectedLabels[index] = scale
     collectedLabels[index] = dofparams.rz
 
     # READ THE GENERATED PEM FILE
     pemname = trainingPemNames[index]
     pemimg  = sitk.ReadImage(pemname)
+    print 'processing image {0}'.format(pemname)
 
     # READ THE IMAGE FILE
-    imgname = trainingImgNames[index]
-    intimg  = sitk.ReadImage(imgname)
+    #imgname = trainingImgNames[index]
+    #intimg  = sitk.ReadImage(imgname)
 
     # READ THE GENERATED VTK FILES AND FIND THE CORRESPONDING WINDOW FOR PEMS
     vtkname = trainingVtkNames[index]
@@ -109,20 +123,33 @@ for index in range(numAllSamples):
         continue
 
     # CROP THE PEM IMAGE AND USE IT AS INPUT FEATURES
-    croppedimg = sitk.Crop(pemimg,lower_boun,upper_boun)
-    croppedimg = sitk.DiscreteGaussian(croppedimg, downsampleSize/2)
+    croppedimg = sitk.DiscreteGaussian(pemimg, smoothWidth)
+    croppedimg = sitk.Crop(croppedimg,lower_boun,upper_boun)
     croppedimg = sitk.Shrink(croppedimg, [downsampleSize,downsampleSize,downsampleSize])
     croppedarr = sitk.GetArrayFromImage(croppedimg)
-    scipy.misc.imsave('/vol/biomedic/users/oo2113/tmp2/{0}.jpg'.format(pemname.split('/')[-1].split('.nii.gz')[0]), croppedarr[4,:,:])
-    collectedPems[index,:numFeatures/2] = croppedarr.flatten()
 
-    # CROP THE INTENSITY IMAGE AND USE IT AS ANOTHER SET OF INPUT FEATURES
-    croppedint = sitk.Crop(intimg,lower_boun,upper_boun)
-    croppedint = sitk.DiscreteGaussian(croppedint, downsampleSize/2)
-    croppedint = sitk.Shrink(croppedint, [downsampleSize,downsampleSize,downsampleSize])
-    croppedarr = sitk.GetArrayFromImage(croppedint)
-    scipy.misc.imsave('/vol/biomedic/users/oo2113/tmp2/{0}_int.jpg'.format(pemname.split('/')[-1].split('.nii.gz')[0]), croppedarr[4,:,:])
-    collectedPems[index,numFeatures/2:] = croppedarr.flatten()
+    scipy.misc.imsave('/homes/oo2113/tmp2/{0}.jpg'.format(pemname.split('/')[-1].split('.nii.gz')[0]), croppedarr[inputSampleSize[2]/2,:,:])
+    collectedFtrs[index,:numPemFeatures] = croppedarr.flatten()
+
+    # Collect Landmark based features
+    combinations   = list(itertools.combinations(range(numLandmarks), 2))
+    pair_distances = []
+    for cmb in combinations:
+        pnt1 = vtkpnts[cmb[0],:]
+        pnt2 = vtkpnts[cmb[1],:]
+        pair_distances.append(np.sqrt(np.sum(np.power((pnt1 - pnt2), 2))))
+    pair_distances = np.array(pair_distances,dtype=np.float64)
+
+    combinations = list(itertools.combinations(range(len(pair_distances)), 2))
+    pair_ratios  = []
+    for cmb in combinations:
+        dist1 = pair_distances[cmb[0]]
+        dist2 = pair_distances[cmb[1]]
+        pair_ratios.append(dist1/dist2)
+    pair_ratios = np.array(pair_ratios,dtype=np.float64)
+
+    lmfeatures = np.concatenate((pair_distances,pair_ratios))
+    collectedFtrs[index,numPemFeatures:] = lmfeatures
 
 # DEFINE THE REGRESSOR OBJECT AND IT'S PARAMETERS
 regressor = RandomForestRegressor(bootstrap=True,
@@ -141,18 +168,18 @@ regressor = RandomForestRegressor(bootstrap=True,
                                   warm_start=False)
 
 # PERFORM TRAINING THEN INFERENCE ON TESTING DATASET
-regressor.fit(collectedPems[:numTrainingSamples,:], collectedLabels[:numTrainingSamples])
-predictedLabels = regressor.predict(collectedPems[numTrainingSamples:,:])
+regressor.fit(collectedFtrs[:numTrainingSamples,:], collectedLabels[:numTrainingSamples])
+predictedLabels = regressor.predict(collectedFtrs[numTrainingSamples:,:])
 feat_importance = regressor.feature_importances_
 
 print collectedLabels[numTrainingSamples:]
 print predictedLabels
 
 print '\n'
-imp_pem = np.sum(feat_importance[:numFeatures/2])
-imp_int = np.sum(feat_importance[numFeatures/2:])
+imp_pem = np.sum(feat_importance[:numPemFeatures])
+imp_LM  = np.sum(feat_importance[numPemFeatures:numFeatures])
 print 'PEM Importance: {0}'.format(imp_pem)
-print 'Intensity Importance: {0}'.format(imp_int)
+print 'LM Importance: {0}'.format(imp_LM)
 
 # EVALUATE THE ACCURACY OF PREDICTIONS
 mse = np.power(predictedLabels - collectedLabels[numTrainingSamples:],2)

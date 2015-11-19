@@ -12,7 +12,6 @@ addpath(genpath(horzcat(workdirectory,'/toolbox')));
 firstFileID  = fopen(firstTxtFile, 'r');
 load(patientMatFile);
 
-
 nLandmarks = 6;
 formatSpec = ['%s %f %f %f %f %f %f %s %f %s %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f'];
 firstData  = textscan(firstFileID, formatSpec,'Delimiter',' ');

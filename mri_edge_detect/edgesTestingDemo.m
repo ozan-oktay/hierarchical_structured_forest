@@ -23,8 +23,10 @@ function edgesTestingDemo (modelname,imagename,savedir)
   opts.pixel_type         = 'uint16';         % output image pixel type
   opts.pixel_spacing      = [1.25,1.25,2.00]; % intensity and pem pixel spacing in world coordinates
   opts.referenceimagename = horzcat(workdirectory,'/',model.opts.imageDir,'/reference/ref_image.nii.gz');
+  opts.referencecropname  = horzcat(workdirectory,'/',model.opts.imageDir,'/reference/ref_image_cropped.nii.gz');
   opts.imagename          = horzcat(workdirectory,'/mritestingdata/images/14DA01414_ed0_3D.nii.gz');
   opts.savedir            = horzcat(workdirectory,'/tmp');  
+  opts.stageId            = model.opts.stageId;
 
   if (nargin >= 2), opts.imagename = imagename; end;
   if (nargin >= 3), opts.savedir   = savedir;   end; mkdir(opts.savedir)
@@ -36,7 +38,7 @@ function edgesTestingDemo (modelname,imagename,savedir)
   opts.tmpimagename       =strcat(tempname('./tmp'),'.nii.gz');
   
   %% if the classifier is in the second stage find the pem image %%%%
-  if (model.opts.stageId == 1)
+  if (opts.stageId == 1)
     tmp1              = strsplit(opts.savedir,'/');    
     opts.pemimagename = strcat(strjoin(tmp1(1:end-1),'/'),'/pems/',opts.patname,'_pem.nii.gz');
     opts.vtkname      = strcat(strjoin(tmp1(1:end-1),'/'),'/pems/',opts.patname,'_lm.vtk');
@@ -69,7 +71,7 @@ function edgesTestingDemo (modelname,imagename,savedir)
   delete(opts.tmpimagename);
 
   % save the pose values 
-  if (model.opts.stageId == 1)
+  if (opts.stageId == 1)
       fileID = fopen(opts.posetxtsavename,'w');
       fprintf(fileID,'mean val: %3.3f %3.3f\n',pVal(1),pVal(3));
       fprintf(fileID,'std val: %3.3f %3.3f\n' ,sqrt(pVal(2)),sqrt(pVal(4)));
@@ -85,9 +87,17 @@ function funPreprocessing (op)
 binaryresample  ='irtk_binaries/linux/resample';
 system(sprintf('%s %s %s -linear -size %f %f %f',binaryresample,op.imagename,op.tmpimagename, op.pixel_spacing(1), op.pixel_spacing(2), op.pixel_spacing(3))); 
 
+%%%% If it's the last stage - then perform the normalization based on the cropped image
+if(op.stageId == 1)
+    binaryregion = 'irtk_binaries/linux/region2';
+    system(sprintf('%s %s %s -landmarks %s',binaryregion,op.tmpimagename,op.tmpimagename,op.vtkname)); 
+end
+
 %%%% Histogram Normalization ( not for CT images - other modalities )
+if (op.stageId == 1), referencename = op.referencecropname;
+else referencename = op.referenceimagename;end
 binarynormalize ='irtk_binaries/linux/normalize';
-system(sprintf('%s %s %s %s -piecewise',binarynormalize,op.referenceimagename,op.tmpimagename,op.tmpimagename)); 
+system(sprintf('%s %s %s %s -piecewise',binarynormalize,referencename,op.tmpimagename,op.tmpimagename)); 
 
 %%%% Convert the images to NIFTI format (can be used to convert to NIFTI format)
 binaryconvert   ='irtk_binaries/linux/convert';
