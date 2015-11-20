@@ -82,7 +82,8 @@ dfs={'imWidth',24, 'gtWidth',12, 'nPos',7e5, 'nNeg',7e5, 'nImgs',40, ...
   'seed',1, 'useParfor',0, 'ctmaxval',5000, 'modelDir','models/', ...
   'nLandmarks',0, 'modelFnm','ctmodel', 'regSplit','mse', ...
   'imageDir','ct_training_data/', 'nodeProb',ones(3,1), 'stageId',0, ...
-  'shpWidth',[], 'shpDepth',[], 'shpSmooth',1, 'shpShrink',4, 'nPosePar',0};
+  'shpWidth',[], 'shpDepth',[], 'shpSmooth',1, 'shpShrink',4, ...
+  'nPosePar',0, 'nShpOrients',8, 'nShpBinSize',10};
 
 opts = getPrmDflt(varargin,dfs,1);
 if(nargin==0), model=opts; return; end                                     
@@ -105,13 +106,22 @@ opts.imWidth=imWidth; opts.gtWidth=gtWidth;
 nChnsGrad=2+opts.nOrients; nChnsColor=1; 
 nChns = nChnsGrad+nChnsColor; opts.nChns = nChns;
           
-stageId=opts.stageId; opts.nShpFtrs=0; shpShrink=opts.shpShrink;
+stageId=opts.stageId;   shpShrink=opts.shpShrink;
 shpWidth=opts.shpWidth; shpDepth=opts.shpDepth;
 shpWidth=round(shpWidth/shpShrink/2)*shpShrink*2;
 shpDepth=round(shpDepth/shpShrink/2)*shpShrink*2;
+nShpBinSize = opts.nShpBinSize;
+nShpOrients = opts.nShpOrients;
 opts.shpWidth=shpWidth; opts.shpDepth=shpDepth;
-if(stageId),  opts.nShpFtrs = shpWidth*shpWidth*shpDepth/shpShrink/shpShrink/shpShrink; end
-if(~stageId), opts.nPosePar = 0.0; end;
+
+if(stageId),  
+  nShpFtrsApp   = shpWidth*shpWidth*shpDepth/shpShrink/shpShrink/shpShrink; 
+  nShpLmPairs   = opts.nLandmarks * (opts.nLandmarks-1) / 2;
+  nShpFtrsLm    = nShpLmPairs + nShpLmPairs * (nShpLmPairs-1) / 2;
+  nShpFtrsHoG   = (3*nShpOrients+5) * floor(shpWidth/nShpBinSize) * floor(shpWidth/nShpBinSize) * (shpDepth/shpShrink);
+  opts.nShpFtrs = nShpFtrsApp + nShpFtrsLm + nShpFtrsHoG;
+end
+if(~stageId), opts.nShpFtrs=0; opts.nPosePar = 0.0; end;
 
 opts.nChnFtrs = imWidth*imWidth*imWidth*nChns/shrink/shrink/shrink;        
 opts.nSimFtrs = (nCells*nCells*nCells)*(nCells*nCells*nCells-1)/2*nChns;   
