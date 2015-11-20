@@ -10,8 +10,8 @@ addpath(rootpath); addpath(genpath(strcat(rootpath,'/toolbox')));
 %%%% set opts for training (see edgesTrain_3D.m) %%%%
    opts.imWidth= 28;                    % [28]  width of image patches    
    opts.gtWidth= 12;                    % [12]  width of ground truth patches     
-      opts.nPos= 1.4e6;                 % [1e6] number of positive patches per tree
-      opts.nNeg= 1.4e6;                 % [1e6] number of negative patches per tree
+      opts.nPos= 1.2e6;                 % [1e6] number of positive patches per tree
+      opts.nNeg= 1.2e6;                 % [1e6] number of negative patches per tree
      opts.nImgs= Inf;                   % [75]  maximum number of images to use for training
     opts.nTrees= 8;                     % [16]  number of trees in forest to train
   opts.fracFtrs= 0.125;                 % [1/8] fraction of features to use to train each tree      
@@ -38,8 +38,8 @@ opts.nTreesEval= 8;                     % [10]  number of trees to evaluate per 
       opts.seed= 1;                     % [1]   seed for random stream (for reproducibility)
  opts.useParfor= 1;                     % [0]   if true train trees in parallel (memory intensive)
   opts.modelDir= 'models/';             % ['models/'] target directory for storing models
-  opts.modelFnm= 'new_prn016_l';        % ['ctmodel'] model filename
-  opts.imageDir= 'mritrainingdata_sec/';% ['mritrainingdata_sec/'] location of image dataset     
+  opts.modelFnm= 'prn016';              % ['ctmodel'] model filename
+  opts.imageDir= 'mritrainingdata_sec_large/';% ['mritrainingdata_sec/'] location of image dataset     
   opts.ctmaxval= 1024;                  % [1024] maximum allowed intensity value - for linear scaling. 
   
 opts.nLandmarks= 6;                     % [false] if true train trees with both classification and regression nodes

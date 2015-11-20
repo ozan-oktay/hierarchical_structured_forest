@@ -10,7 +10,8 @@ vtk     = padarray(vtk,[0,1],1.0,'post');
 vol_ind = w2i * vtk'; 
 cnt_ind = round(mean(vol_ind,2));
 
-% CROP THE WINDOW BASED ON THE SPECIFIED OPTS PARS
+%%% Compute Standard Appearance Features
+%%% CROP THE WINDOW BASED ON THE SPECIFIED OPTS PARS
 shpShrink = opts.shpShrink;
 shpWidth  = opts.shpWidth;
 shpDepth  = opts.shpDepth;

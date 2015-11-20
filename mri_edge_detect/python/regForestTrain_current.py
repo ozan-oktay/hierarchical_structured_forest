@@ -38,9 +38,9 @@ trainingImgNames = []
 # TRAINING PARAMETERS
 numAllSamples      = np.array([670])
 numTrainingSamples = np.array([600])
-inputSampleSize    = np.array([50,50,8])
-downsampleSize     = 2
-smoothWidth        = 1
+inputSampleSize    = np.array([34,34,6])
+downsampleSize     = 3
+smoothWidth        = 2
 numLandmarks       = 6
 
 # INPUT TRAINING PEM IMAGES
@@ -79,7 +79,7 @@ for trainingPemName,trainingDofName,trainingVtkName,trainingImgName in zip(train
 numAllSamples  = np.min([numAllSamples,len(trainingPemNames)])
 numPemFeatures = inputSampleSize[0]*inputSampleSize[1]*inputSampleSize[2]
 numLMFeatures  = comb2(numLandmarks, 2) + comb2(comb2(numLandmarks, 2),2)
-numHoGFeatures = 512
+numHoGFeatures = 512 * inputSampleSize[2] * downsampleSize
 numFeatures    = numLMFeatures + numPemFeatures + numHoGFeatures
 
 collectedLabels = np.zeros([numAllSamples],dtype=float)
@@ -156,9 +156,11 @@ for index in range(numAllSamples):
     from skimage.feature import hog
     image = sitk.Crop(pemimg,lower_boun,upper_boun)
     image = sitk.GetArrayFromImage(image)
-    image = image[4,:,:]
-    fd, hog_image = hog(image, orientations=8, pixels_per_cell=(12, 12), cells_per_block=(1, 1), visualise=True)
-    collectedFtrs[index,numPemFeatures+numLMFeatures:] = fd
+    hogFtrs = []
+    for sliceId in range(inputSampleSize[2] * downsampleSize):
+        fd, hog_image = hog(image[sliceId,:,:], orientations=8, pixels_per_cell=(12, 12), cells_per_block=(1, 1), visualise=True)
+        hogFtrs.append(fd)
+    collectedFtrs[index,numPemFeatures+numLMFeatures:] = np.array(hogFtrs).flatten()
 
 
 # DEFINE THE REGRESSOR OBJECT AND IT'S PARAMETERS

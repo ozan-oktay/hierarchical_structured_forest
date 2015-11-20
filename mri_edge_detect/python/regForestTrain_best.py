@@ -40,7 +40,7 @@ numAllSamples      = np.array([670])
 numTrainingSamples = np.array([600])
 inputSampleSize    = np.array([50,50,8])
 downsampleSize     = 2
-smoothWidth        = 1
+smoothWidth        = 2
 numLandmarks       = 6
 
 # INPUT TRAINING PEM IMAGES
@@ -79,7 +79,8 @@ for trainingPemName,trainingDofName,trainingVtkName,trainingImgName in zip(train
 numAllSamples  = np.min([numAllSamples,len(trainingPemNames)])
 numPemFeatures = inputSampleSize[0]*inputSampleSize[1]*inputSampleSize[2]
 numLMFeatures  = comb2(numLandmarks, 2) + comb2(comb2(numLandmarks, 2),2)
-numFeatures    = numLMFeatures + numPemFeatures
+numHoGFeatures = 512 * inputSampleSize[2] * downsampleSize
+numFeatures    = numLMFeatures + numPemFeatures + numHoGFeatures
 
 collectedLabels = np.zeros([numAllSamples],dtype=float)
 collectedFtrs   = np.zeros([numAllSamples,numFeatures],dtype=float)
@@ -149,7 +150,18 @@ for index in range(numAllSamples):
     pair_ratios = np.array(pair_ratios,dtype=np.float64)
 
     lmfeatures = np.concatenate((pair_distances,pair_ratios))
-    collectedFtrs[index,numPemFeatures:] = lmfeatures
+    collectedFtrs[index,numPemFeatures:numPemFeatures+numLMFeatures] = lmfeatures
+
+    # HOG FEATURES
+    from skimage.feature import hog
+    image = sitk.Crop(pemimg,lower_boun,upper_boun)
+    image = sitk.GetArrayFromImage(image)
+    hogFtrs = []
+    for sliceId in range(inputSampleSize[2] * downsampleSize):
+        fd, hog_image = hog(image[sliceId,:,:], orientations=8, pixels_per_cell=(12, 12), cells_per_block=(1, 1), visualise=True)
+        hogFtrs.append(fd)
+    collectedFtrs[index,numPemFeatures+numLMFeatures:] = np.array(hogFtrs).flatten()
+
 
 # DEFINE THE REGRESSOR OBJECT AND IT'S PARAMETERS
 regressor = RandomForestRegressor(bootstrap=True,
@@ -177,9 +189,12 @@ print predictedLabels
 
 print '\n'
 imp_pem = np.sum(feat_importance[:numPemFeatures])
-imp_LM  = np.sum(feat_importance[numPemFeatures:numFeatures])
+imp_LM  = np.sum(feat_importance[numPemFeatures:numPemFeatures+numLMFeatures])
+imp_HoG = np.sum(feat_importance[numPemFeatures+numLMFeatures:])
 print 'PEM Importance: {0}'.format(imp_pem)
 print 'LM Importance: {0}'.format(imp_LM)
+print 'HoG Importance: {0}'.format(imp_HoG)
+
 
 # EVALUATE THE ACCURACY OF PREDICTIONS
 mse = np.power(predictedLabels - collectedLabels[numTrainingSamples:],2)
