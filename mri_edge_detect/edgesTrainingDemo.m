@@ -38,8 +38,8 @@ opts.nTreesEval= 8;                     % [10]  number of trees to evaluate per 
       opts.seed= 1;                     % [1]   seed for random stream (for reproducibility)
  opts.useParfor= 1;                     % [0]   if true train trees in parallel (memory intensive)
   opts.modelDir= 'models/';             % ['models/'] target directory for storing models
-  opts.modelFnm= 'new_prn016_shape';    % ['ctmodel'] model filename
-  opts.imageDir= 'mritrainingdata_sec/';% ['mritrainingdata_sec/'] location of image dataset     
+  opts.modelFnm= 'new_prn016_shape_large';    % ['ctmodel'] model filename
+  opts.imageDir= 'mritrainingdata_sec_large/';% ['mritrainingdata_sec/'] location of image dataset     
   opts.ctmaxval= 1024;                  % [1024] maximum allowed intensity value - for linear scaling. 
   
 opts.nLandmarks= 6;                     % [false] if true train trees with both classification and regression nodes

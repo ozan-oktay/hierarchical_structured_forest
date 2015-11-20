@@ -13,7 +13,7 @@ chnsShp = cell(1,3);
 
 %% COMPUTE THE LANDMARK DISTANCES AND DISTANCE RATIOS
 num_landmarks    = size(vtk,1);
-pairs            = combntns(1:num_landmarks,2);
+pairs            = nchoosek(1:num_landmarks,2);
 num_combinations = size(pairs,1);
 pair_distances   = zeros(num_combinations,1);
 
@@ -24,7 +24,7 @@ for loopId=1:num_combinations, cmb=pairs(loopId,:);
 end
 
 num_distances    = size(pair_distances,1);
-pairs            = combntns(1:num_distances,2);
+pairs            = nchoosek(1:num_distances,2);
 num_combinations = size(pairs,1);
 pair_ratios      = zeros(num_combinations,1);
 for loopId=1:num_combinations, cmb=pairs(loopId,:);
