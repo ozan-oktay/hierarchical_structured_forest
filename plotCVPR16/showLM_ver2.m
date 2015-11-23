@@ -8,7 +8,7 @@ addpath(genpath('/homes/oo2113/workspace/matlab/plotTools/raacampbell13-notBoxPl
 addpath(genpath('/vol/biomedic/users/oo2113/str_hier_forest_mri'));
 testing_dataset    = 'mristacomdata';
 training_dataset   = 'mritrainingdata_sec_large';
-model              = 'prn016';
+model              = 'new_prn016_shape_large';
 save_dir           = '/homes/oo2113/tmp';
 
 niifilenames       = dir(strcat('/vol/biomedic/users/oo2113/str_hier_forest_mri/',testing_dataset,'/images/*.nii.gz'));
