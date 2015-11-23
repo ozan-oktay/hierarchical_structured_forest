@@ -94,10 +94,14 @@ if(op.stageId == 1)
 end
 
 %%%% Histogram Normalization ( not for CT images - other modalities )
-if (op.stageId == 1), referencename = op.referencecropname;
-else referencename = op.referenceimagename;end
 binarynormalize ='irtk_binaries/linux/normalize';
-system(sprintf('%s %s %s %s -piecewise',binarynormalize,referencename,op.tmpimagename,op.tmpimagename)); 
+if (op.stageId == 1), 
+    referencename = op.referencecropname;
+    system(sprintf('%s %s %s %s -piecewise',binarynormalize,referencename,op.tmpimagename,op.tmpimagename)); 
+else
+    referencename = op.referenceimagename;
+    system(sprintf('%s %s %s %s',binarynormalize,referencename,op.tmpimagename,op.tmpimagename)); 
+end
 
 %%%% Convert the images to NIFTI format (can be used to convert to NIFTI format)
 binaryconvert   ='irtk_binaries/linux/convert';
