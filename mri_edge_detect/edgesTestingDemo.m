@@ -100,7 +100,7 @@ if (op.stageId == 1),
     system(sprintf('%s %s %s %s -piecewise',binarynormalize,referencename,op.tmpimagename,op.tmpimagename)); 
 else
     referencename = op.referenceimagename;
-    system(sprintf('%s %s %s %s',binarynormalize,referencename,op.tmpimagename,op.tmpimagename)); 
+    system(sprintf('%s %s %s %s -piecewise',binarynormalize,referencename,op.tmpimagename,op.tmpimagename)); 
 end
 
 %%%% Convert the images to NIFTI format (can be used to convert to NIFTI format)
