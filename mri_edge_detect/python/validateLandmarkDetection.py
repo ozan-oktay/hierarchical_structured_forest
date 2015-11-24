@@ -56,8 +56,8 @@ slurm_queue    = 'short'
 slurm_logname  = '/vol/bitbucket/oo2113/tmp/logfile.out'
 base_dir       = '/vol/medic02/users/oo2113/str_hier_forest_mri'
 source_dir     = base_dir + '/mri_edge_detect'
-testdata_dir   = base_dir + '/mristacomdata'
-modelname      = 'new_prn016_shape_large'
+testdata_dir   = base_dir + '/mritestingdata'
+modelname      = 'prn000'
 n_atlases      = 3
 
 input_img_dir    = testdata_dir + '/images'

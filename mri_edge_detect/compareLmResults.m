@@ -6,7 +6,7 @@ function compareLmResults()
 restoredefaultpath;
 workdirectory  = '/vol/medic02/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
 patientMatFile = strcat(workdirectory,'/mristacomdata/dofs/patientParam.mat');
-firstTxtFile   = strcat(workdirectory,'/mristacomdata/results/distances_new_prn016_shape_large.txt');
+firstTxtFile   = strcat(workdirectory,'/mristacomdata/results/distances_interUser.txt');
 addpath(genpath(horzcat(workdirectory,'/toolbox')));
   
 firstFileID  = fopen(firstTxtFile, 'r');

@@ -6,7 +6,7 @@ clear all; clc; close all;
 restoredefaultpath;
 workdirectory  = '/vol/biomedic/users/oo2113/str_hier_forest_mri'; addpath(workdirectory);
 patientMatFile = strcat(workdirectory,'/mritestingdata/dofs/patientParam.mat');
-firstTxtFile   = strcat(workdirectory,'/mritestingdata/results/distances_prn020.txt');
+firstTxtFile   = strcat(workdirectory,'/mritestingdata/results/distances_new_prn016_shape_large.txt');
 secondTxtFile  = strcat(workdirectory,'/mritestingdata/results/distances_prn000.txt');
 addpath(genpath(horzcat(workdirectory,'/toolbox')));
   

@@ -10,7 +10,7 @@ def createFolder(directory):
 
 # Base Parameter List - Landmark Locations
 source_dir     = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect'
-testdata_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mribiobankdata'
+testdata_dir   = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mristacomdata'
 
 ground_lm_dir1  = testdata_dir + '/landmarks'
 ground_lm_dir2  = testdata_dir + '/landmarks_ozan'
