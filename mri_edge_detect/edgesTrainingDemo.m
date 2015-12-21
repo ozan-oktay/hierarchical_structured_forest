@@ -38,7 +38,7 @@ opts.nTreesEval= 8;                     % [10]  number of trees to evaluate per 
       opts.seed= 1;                     % [1]   seed for random stream (for reproducibility)
  opts.useParfor= 1;                     % [0]   if true train trees in parallel (memory intensive)
   opts.modelDir= 'models/';             % ['models/'] target directory for storing models
-  opts.modelFnm= 'prn016';              % ['ctmodel'] model filename
+  opts.modelFnm= 'new_prn016_shape_large2';  % ['ctmodel'] model filename
   opts.imageDir= 'mritrainingdata_sec_large/';% ['mritrainingdata_sec/'] location of image dataset     
   opts.ctmaxval= 1024;                  % [1024] maximum allowed intensity value - for linear scaling. 
   
@@ -46,14 +46,17 @@ opts.nLandmarks= 6;                     % [false] if true train trees with both 
   opts.regSplit= 'mse';                 % ['mse'] regression criterion
   opts.nodeProb= [0.160,0.420,0.420];   % probability of selecting a regression split in training
    opts.stageId= 1;                     % Framework stage identifier - the zeroth level extracts pems/landmarks - the first level outputs also pose/scale in addition 
-  opts.shpWidth= 100;                   % Width of the window for PEM Shape features
-  opts.shpDepth= 20;                    % Depth of the window for PEM Shape features     
+  opts.shpWidth= 102;                   % Width of the window for PEM Shape features
+  opts.shpDepth= 18;                    % Depth of the window for PEM Shape features     
  opts.shpSmooth= 3;                     % Smoothing sigma par for PEM Shape features
- opts.shpShrink= 4;                     % Shrink factor for PEM Shape features
-  opts.nPosePar= 2;                     % Number of pose parameters used in tree training (grountruth information)
+ opts.shpShrink= 3;                     % Shrink factor for PEM Shape features
+ 
+   opts.nPosePar= 2;                    % Number of pose parameters used in tree training (grountruth information)
+opts.nShpOrients= 8;                    % Number of orientations in HoG histograms
+opts.nShpBinSize= 12;                   % Number of pixels in each dim for histogram binning
   
 %%%% train edge detector (~150m/20Gb per tree, proportional to nPos/nNeg) %%%%
 if (~isempty(gcp('nocreate'))), poolobj = gcp('nocreate'); delete(poolobj); end; 
-if (opts.useParfor), pool=parpool(4); end;
+if (opts.useParfor), pool=parpool(3); end;
 tic, edgesTrain_3D(opts); toc; % will load model if already trained
 if (~isempty(gcp('nocreate'))), poolobj = gcp('nocreate'); delete(poolobj); end; 

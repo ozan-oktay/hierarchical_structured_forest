@@ -19,7 +19,7 @@ slurm_ncores = 1
 slurm_nthreads = 8
 slurm_memory = 250
 slurm_queue = 'long'
-source_dir = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect/'
+source_dir = '/vol/medic02/users/oo2113/str_hier_forest_mri/mri_edge_detect/'
 modelname=['prn016']
 pr=[[0.16,0.42,0.42]]
 
