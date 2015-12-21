@@ -3,16 +3,24 @@ function showLM()
 % Date  : 23/10/2015 
 close all;
 addpath(genpath('/homes/oo2113/workspace/matlab/plotTools/raacampbell13-notBoxPlot-409489c'));
+
 %patientId='8SXCUSBX__ed0_3D'; % might be good for both scale rotation 
-patientId='JZNXYS5T__ed0_3D'; % good for rotation
+%patientId='JZNXYS5T__ed0_3D'; % good for rotation
+%testing_dataset  = 'mribiobankdata';
+
+% ROTATION DEMO SUBJECT
+%patientId='14EA01979_ed0_3D';
+%testing_dataset  = 'mritestingdata';
+
+% SCALE DEMO SUBJECT
+patientId='8SXCUSBX__ed0_3D';
 testing_dataset  = 'mribiobankdata';
+
 training_dataset = 'mritrainingdata_sec_large';
-
-
-test_image_name = strcat('/vol/biomedic/users/oo2113/str_hier_forest_mri/',testing_dataset,'/images/',patientId,'.nii.gz');
-strat_lm_name   = strcat('/vol/biomedic/users/oo2113/str_hier_forest_mri/',testing_dataset,'/pems_prn016/',patientId,'_lm.vtk');
-hough_lm_name   = strcat('/vol/biomedic/users/oo2113/str_hier_forest_mri/',testing_dataset,'/pems_prn000/',patientId,'_lm.vtk');
-groun_lm_name   = strcat('/vol/biomedic/users/oo2113/str_hier_forest_mri/',testing_dataset,'/landmarks/',patientId,'.vtk');
+test_image_name  = strcat('/vol/biomedic/users/oo2113/str_hier_forest_mri/',testing_dataset,'/images/',patientId,'.nii.gz');
+strat_lm_name    = strcat('/vol/biomedic/users/oo2113/str_hier_forest_mri/',testing_dataset,'/pems_new_prn016_shape_large/',patientId,'_lm.vtk');
+hough_lm_name    = strcat('/vol/biomedic/users/oo2113/str_hier_forest_mri/',testing_dataset,'/pems/',patientId,'_lm.vtk');
+groun_lm_name    = strcat('/vol/biomedic/users/oo2113/str_hier_forest_mri/',testing_dataset,'/landmarks/',patientId,'.vtk');
 
 % Load the nifti image 
 target_image = load_untouch_nii(test_image_name); target_image = target_image.img; 
@@ -25,7 +33,7 @@ groun_lm = w2iMat * cat(2,vtk2Mat(groun_lm_name),ones(6,1))' +1;
 
 % Show the image and overlay the detected landmarks
 figure('units','normalized','position',[.1 .1 .4 .6])
-slice = target_image(:,:,round(groun_lm(3,3)));
+slice = target_image(:,:,round(groun_lm(3,1)));
 
     imagesc(slice); hold on;
     for i=1:4
@@ -33,10 +41,11 @@ slice = target_image(:,:,round(groun_lm(3,3)));
         plot(hough_lm(2,i),hough_lm(1,i),'r*','MarkerSize',16);
         plot(groun_lm(2,i),groun_lm(1,i),'g*','MarkerSize',16);
     end
+    
 camroll(90)
 colormap('gray');
 h_legend = legend('Stratification Forest','Hough Forest','Manual Annotations','Location','NorthEast');
-set(h_legend,'FontSize',16);
+set(h_legend,'FontSize',18);
 set(h_legend,'color','k');
 set(h_legend,'TextColor','w')
 set(gca,'YTickLabel',[])
