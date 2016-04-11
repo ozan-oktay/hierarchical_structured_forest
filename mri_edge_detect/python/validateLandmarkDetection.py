@@ -18,6 +18,23 @@ def createFolder(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+def evalConf(imagename,generatedConfFile,confidenceTxt):
+  import re
+
+  # Read the generated confidence text file
+  txtfile     = open(generatedConfFile, 'r')
+  txtline     = txtfile.readline(); computedConf = re.findall(r"[-+]?\d*\.\d+|\d+", txtline)
+  txtfile.close()
+
+  # Write the values
+  with open(confidenceTxt, "a") as myfile:
+    myfile.write('file: {0} '.format(imagename))
+    myfile.write('cmpt: ')
+    for mean in computedConf:
+      myfile.write('{0} '.format(mean))
+    myfile.write('\n')
+    myfile.close()
+
 def evalPose(imagename,groundtruthPoseFile,generatedPoseFile,poseErrorTxt):
   import irtk
   import re
@@ -54,11 +71,11 @@ slurm_nthreads = 1
 slurm_memory   = 25
 slurm_queue    = 'short'
 slurm_logname  = '/vol/bitbucket/oo2113/tmp/logfile.out'
-base_dir       = '/vol/medic02/users/oo2113/str_hier_forest_mri'
+base_dir       = '/vol/biomedic/users/oo2113/str_hier_forest_mri'
 source_dir     = base_dir + '/mri_edge_detect'
 testdata_dir   = base_dir + '/mritestingdata'
-modelname      = 'prn000'
-n_atlases      = 3
+modelname      = 'new_prn016_shape_large'
+n_atlases      = 1
 
 input_img_dir    = testdata_dir + '/images'
 ground_lm_dir    = testdata_dir + '/landmarks'
@@ -74,6 +91,7 @@ outputimages         = []
 generatedLandmarks   = []
 groundtruthLandmarks = []
 generatedPoseFiles   = []
+generatedConfFiles   = []
 groundtruthPoseFiles = []
 groundtruthLabels    = []
 
@@ -87,6 +105,7 @@ for file in os.listdir(input_img_dir):
         generatedLandmarks.append(output_dir+'/'+parsedfile[0]+'_lm.vtk')
         groundtruthPoseFiles.append(ground_dof_dir+'/'+parsedfile[0]+'.dof.gz')
         generatedPoseFiles.append(output_dir+'/'+parsedfile[0]+'_pose.txt')
+        generatedConfFiles.append(output_dir+'/'+parsedfile[0]+'_entropy.txt')
 
 inputimages          = sorted(inputimages)
 outputimages         = sorted(outputimages)
@@ -95,15 +114,19 @@ generatedLandmarks   = sorted(generatedLandmarks)
 groundtruthPoseFiles = sorted(groundtruthPoseFiles)
 generatedPoseFiles   = sorted(generatedPoseFiles)
 groundtruthLabels    = sorted(groundtruthLabels)
+generatedConfFiles   = sorted(generatedConfFiles)
+
 
 # Evaluation parameters
 numSubjects      = min([500000,len(inputimages)])
 print ('number of subjects is {0}'.format(numSubjects))
 distanceTxtFile      = results_dir + '/distances_'         + modelname + '.txt'
 poseErrorTxtFile     = results_dir + '/poseEstimations_'   + modelname + '.txt'
+confidenceTxtFile    = results_dir + '/confEstimations_'   + modelname + '.txt'
 rigidRegErrorTxtFile = results_dir + '/rigidRegistration_' + modelname + '.txt'
 if os.path.exists(distanceTxtFile):  os.remove(distanceTxtFile)
 if os.path.exists(poseErrorTxtFile): os.remove(poseErrorTxtFile)
+if os.path.exists(confidenceTxtFile): os.remove(confidenceTxtFile)
 if os.path.exists(rigidRegErrorTxtFile): os.remove(rigidRegErrorTxtFile)
 
 for ind in range(numSubjects):
@@ -118,7 +141,8 @@ for ind in range(numSubjects):
         tempdof2  = tp.NamedTemporaryFile(delete = True,suffix='.dof.gz'); cmd_eval += ' /vol/medic02/users/oo2113/Build/irtk/bin/prreg {0} {1} -dofout {2};'.format(atlas_dir+'/Atlas{0:02d}/landmarks.vtk'.format(ind2),groundtruthLandmarks[ind],tempdof2.name)
         cmd_eval  += ' /vol/medic02/users/oo2113/Build/irtk_master/bin/revaluation {0} {1} {2} -output {3} -vtk {4};'.format(groundtruthLabels[ind],tempdof1.name,tempdof2.name,rigidRegErrorTxtFile,groundtruthLandmarks[ind])
     os.system(cmd_eval)
-    if os.path.exists(generatedPoseFiles[ind]): evalPose(groundtruthLabels[ind],groundtruthPoseFiles[ind],generatedPoseFiles[ind],poseErrorTxtFile)
+    if os.path.exists(generatedPoseFiles[ind]): evalPose(generatedLandmarks[ind],groundtruthPoseFiles[ind],generatedPoseFiles[ind],poseErrorTxtFile)
+    if os.path.exists(generatedConfFiles[ind]): evalConf(generatedLandmarks[ind],generatedConfFiles[ind],confidenceTxtFile)
 
   else:
 

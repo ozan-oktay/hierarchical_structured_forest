@@ -19,13 +19,10 @@ slurm_ncores = 1
 slurm_nthreads = 8
 slurm_memory = 250
 slurm_queue = 'long'
-source_dir = '/vol/medic02/users/oo2113/str_hier_forest_mri/mri_edge_detect/'
-modelname=['prn016']
-pr=[[0.16,0.42,0.42]]
+source_dir = '/vol/biomedic/users/oo2113/str_hier_forest_mri/mri_edge_detect/'
 
-for i in range(len(modelname)):
-  # matlab multi-atlas script command
-  cmd_pem = 'matlab -nodesktop -nosplash -r \\"addpath(\'{0}\'); edgesTrainingDemo(); quit;\\"'.format(source_dir,modelname[i],pr[i][0],pr[i][1],pr[i][2])
-  
-  # Run the proposed method (PEM) on SLURM (Multi-atlas segmentation)
-  sbatch(cmd_pem, mem=slurm_memory, n=slurm_nthreads, c=slurm_ncores, queue=slurm_queue, verbose=True, dryrun=False)
+# matlab multi-atlas script command
+cmd_pem = 'matlab -nodesktop -nosplash -r \\"addpath(\'{0}\'); edgesTrainingDemo(); quit;\\"'.format(source_dir)
+
+# Run the proposed method (PEM) on SLURM (Multi-atlas segmentation)
+sbatch(cmd_pem, mem=slurm_memory, n=slurm_nthreads, c=slurm_ncores, queue=slurm_queue, verbose=True, dryrun=False)

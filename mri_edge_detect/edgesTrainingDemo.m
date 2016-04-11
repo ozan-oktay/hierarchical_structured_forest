@@ -38,14 +38,14 @@ opts.nTreesEval= 8;                     % [10]  number of trees to evaluate per 
       opts.seed= 1;                     % [1]   seed for random stream (for reproducibility)
  opts.useParfor= 1;                     % [0]   if true train trees in parallel (memory intensive)
   opts.modelDir= 'models/';             % ['models/'] target directory for storing models
-  opts.modelFnm= 'new_prn016_shape_large2';  % ['ctmodel'] model filename
-  opts.imageDir= 'mritrainingdata_sec_large/';% ['mritrainingdata_sec/'] location of image dataset     
+  opts.modelFnm= 'forest_first_prealigned';     % ['ctmodel'] model filename
+  opts.imageDir= 'mritrainingdata_pre_aligned/';% ['mritrainingdata_sec/'] location of image dataset     
   opts.ctmaxval= 1024;                  % [1024] maximum allowed intensity value - for linear scaling. 
   
 opts.nLandmarks= 6;                     % [false] if true train trees with both classification and regression nodes
   opts.regSplit= 'mse';                 % ['mse'] regression criterion
   opts.nodeProb= [0.160,0.420,0.420];   % probability of selecting a regression split in training
-   opts.stageId= 1;                     % Framework stage identifier - the zeroth level extracts pems/landmarks - the first level outputs also pose/scale in addition 
+   opts.stageId= 0;                     % Framework stage identifier - the zeroth level extracts pems/landmarks - the first level outputs also pose/scale in addition 
   opts.shpWidth= 102;                   % Width of the window for PEM Shape features
   opts.shpDepth= 18;                    % Depth of the window for PEM Shape features     
  opts.shpSmooth= 3;                     % Smoothing sigma par for PEM Shape features
